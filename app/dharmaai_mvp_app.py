@@ -81,9 +81,14 @@ if streamlit_available:
                 transform: scale(1.05);
             }
             </style>
-            <form action="" method="post">
-                <button class="ask-another-button" type="submit" name="ask_another">🔄 Ask Another</button>
-            </form>
+            st.markdown("<div class='ask-another-button'>", unsafe_allow_html=True)
+            if st.button("🔄 Ask Another"):
+                st.session_state["user_input"] = ""
+                if "Previous Questions" not in st.session_state:
+                    st.session_state["Previous Questions"] = []
+                st.session_state["Previous Questions"].append("[Ask Another Clicked]")
+                st.experimental_rerun()
+            st.markdown("</div>", unsafe_allow_html=True)
             """, unsafe_allow_html=True)
 
         if "user_input" not in st.session_state:
