@@ -1,5 +1,4 @@
 import sys
-import random
 
 try:
     import streamlit as st
@@ -27,28 +26,21 @@ try:
 except:
     df_matrix = None
 
-# GitaBot dynamic logic based on matrix
-
-def generate_gita_response(mode, df_matrix):
-    if df_matrix is None or df_matrix.empty:
-        return "Verse matrix not available. Please check the data source."
-
-    verse = df_matrix.sample(1).iloc[0]
-    translation = verse.get("Short English Translation", "Translation missing")
-    ethical_tag = verse.get("Ethical AI Logic Tag", "[No tag]")
-
-    if mode == "Krishna":
-        return f"🧠 *Krishna Speaks:* \n\n> {translation}\n\n_This reflects the path of {ethical_tag}_"
-    elif mode == "Arjuna":
-        return f"😟 *Arjuna Reflects:* \n\n> I face a dilemma... {translation.lower()}\n\n_This feels like a test of {ethical_tag}_"
-    elif mode == "Vyasa":
-        return f"📖 *Vyasa Narrates:* \n\n> In this verse: '{translation}'.\n\nIt echoes the theme of {ethical_tag}."
-    elif mode == "Mirror":
-        return "> You are not here to receive the answer.  \n> You are here to see your reflection.  \n> Ask again, and you may discover your dharma."
-    elif mode == "Technical":
-        return f"""technical_mode:\n  verse_id: {verse.get('Verse ID')}\n  ethical_tag: {ethical_tag}\n  action_inferred: conscience_based_reflection\n  source: Bhagavad Gita verse\n"""
-    else:
-        return "Unknown mode."
+# GitaBot response logic
+GITABOT_RESPONSES = {
+    "Krishna": "You must act, Jayant, but without attachment to the result. This is the way of detached action.",
+    "Arjuna": "I am torn. If I act, I hurt others. If I don’t, I betray myself. How do I know what is right?",
+    "Vyasa": "In the epic tale, duty and doubt often walked hand in hand. Each verse is a mirror to the soul.",
+    "Mirror": "> You are not here to receive the answer.  \n> You are here to see your reflection.  \n> Ask again, and you may discover your dharma.",
+    "Technical": """
+technical_mode:
+  fork_trigger: paradox_001
+  action_taken: detached_action
+  scroll_reference: Where Dharma Becomes Code
+  conscience_log: true
+  kernel: dharma_kernel
+"""
+}
 
 if streamlit_available:
     st.set_page_config(page_title="DharmaAI MVP", layout="wide")
@@ -64,8 +56,7 @@ if streamlit_available:
         if user_input:
             st.markdown(f"**Mode:** {invocation_mode}")
             st.markdown("---")
-            response = generate_gita_response(invocation_mode, df_matrix)
-            st.markdown(response)
+            st.markdown(GITABOT_RESPONSES.get(invocation_mode, "This mode will return scroll-based responses soon."))
 
     elif mode == "Verse Matrix":
         st.header("📜 Gita × DharmaAI Verse Matrix")
@@ -93,18 +84,15 @@ else:
     print("🪔 DharmaAI – Minimum Viable Conscience")
     print("Select Mode: [GitaBot, Verse Matrix, Scroll Viewer]")
 
-    selected_mode = "GitaBot"
+    selected_mode = "GitaBot"  # Simulated default mode
     user_input = "Should I stay in a toxic job to support my family?"
-    invocation_mode = "Krishna"
-
-    def generate_cli_response(mode):
-        return generate_gita_response(mode, df_matrix)
+    invocation_mode = "Mirror"
 
     if selected_mode == "GitaBot":
         print("\n🧠 GitaBot – Ask with Dharma")
         print(f"User Question: {user_input}")
         print(f"Invocation Mode: {invocation_mode}\n")
-        print(generate_cli_response(invocation_mode))
+        print(GITABOT_RESPONSES.get(invocation_mode, "This mode will return scroll-based responses soon."))
 
     elif selected_mode == "Verse Matrix":
         print("\n📜 Gita × DharmaAI Verse Matrix")
