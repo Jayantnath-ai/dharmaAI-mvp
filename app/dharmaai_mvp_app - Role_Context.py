@@ -4,12 +4,6 @@ import os
 import re
 
 try:
-    import openai
-    openai_available = True
-except ImportError:
-    openai_available = False
-
-try:
     import streamlit as st
     streamlit_available = True
 except ImportError:
@@ -19,12 +13,6 @@ try:
     import pandas as pd
 except ImportError:
     pd = None
-
-from dotenv import load_dotenv
-load_dotenv()
-if openai_available:
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-gemini_api_key = os.getenv("GEMINI_API_KEY")
 
 # Load YAML data if available
 try:
@@ -73,52 +61,6 @@ def infer_user_role(question):
                 return role
     return "seeker"
 
-# Krishna-GPT mode (OpenAI)
-def gpt_krishna_response(user_input, user_role):
-    if not openai_available:
-        return "❌ OpenAI module not available in this environment."
-    prompt = f"""
-You are Krishna from the Bhagavad Gita. The user is a {user_role}. They asked: \"{user_input}\".
-Provide a contextual response rooted in dharma. Include one relevant Gita verse (English) and explain how it applies.
-End with a reminder of detached action or duty, if appropriate.
-"""
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are a dharmic teacher speaking as Krishna."},
-                {"role": "user", "content": prompt}
-            ],
-            max_tokens=300
-        )
-        return response.choices[0].message.content.strip()
-    except Exception as e:
-        return f"❌ Error fetching response from KrishnaGPT: {e}"
-
-# Krishna-Gemini mode (Google Gemini via REST)
-def gemini_krishna_response(user_input, user_role):
-    import requests
-    if not gemini_api_key:
-        return "❌ Gemini API key not found. Please set GEMINI_API_KEY."
-    prompt = f"You are Krishna from the Bhagavad Gita. The user is a {user_role}. They asked: \"{user_input}\".\nRespond with dharmic guidance, include a verse, explain it, and give a reminder of detachment."
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {gemini_api_key}"
-    }
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}]
-    }
-    try:
-        r = requests.post(
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
-            headers=headers, json=payload
-        )
-        r.raise_for_status()
-        reply = r.json()["candidates"][0]["content"]["parts"][0]["text"]
-        return reply.strip()
-    except Exception as e:
-        return f"❌ Error from KrishnaGemini: {e}"
-
 # GitaBot response
 
 def generate_gita_response(mode, df_matrix, user_input=None):
@@ -126,12 +68,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         return "❌ Verse matrix not available. Please check the data file path."
 
     user_role = infer_user_role(user_input) if user_input else "seeker"
-
-    if mode == "Krishna-GPT":
-        return gpt_krishna_response(user_input, user_role)
-    elif mode == "Krishna-Gemini":
-        return gemini_krishna_response(user_input, user_role)
-
     filtered_df = df_matrix[df_matrix["Ethical AI Logic Tag"].str.contains(user_role, case=False, na=False)]
     verse = filtered_df.sample(1).iloc[0] if not filtered_df.empty else df_matrix.sample(1).iloc[0]
 
@@ -161,7 +97,7 @@ if streamlit_available:
     if mode == "GitaBot":
         st.header("🧠 GitaBot – Ask with Dharma")
         user_input = st.text_input("Ask a question or describe a dilemma:")
-        invocation_mode = st.selectbox("Choose Invocation Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
+        invocation_mode = st.selectbox("Choose Invocation Mode", ["Krishna", "Arjuna", "Vyasa", "Mirror", "Technical"])
 
         if user_input:
             st.markdown(f"**Mode:** {invocation_mode}")
@@ -196,3 +132,49 @@ if streamlit_available:
         for scroll in scrolls:
             st.markdown(f"- {scroll}")
         st.success("Scroll previews will be interactive in next version.")
+
+# CLI fallback
+else:
+    print("🪔 DharmaAI – Minimum Viable Conscience")
+    print("Select Mode: [GitaBot, Verse Matrix, Scroll Viewer]")
+
+    selected_mode = "GitaBot"
+    user_input = "Should I stay in a toxic job to support my family?"
+    invocation_mode = "Krishna"
+
+    def generate_cli_response(mode):
+        return generate_gita_response(mode, df_matrix, user_input)
+
+    if selected_mode == "GitaBot":
+        print("\n🧠 GitaBot – Ask with Dharma")
+        print(f"User Question: {user_input}")
+        print(f"Invocation Mode: {invocation_mode}\n")
+        print(generate_cli_response(invocation_mode))
+        if matrix_loaded_from:
+            print(f"Verse loaded from: {matrix_loaded_from}")
+        else:
+            print("❌ Verse matrix file not found in expected paths.")
+
+    elif selected_mode == "Verse Matrix":
+        print("\n📜 Gita × DharmaAI Verse Matrix")
+        if df_matrix is not None:
+            print(df_matrix.head(5).to_string(index=False))
+            if matrix_loaded_from:
+                print(f"Verse matrix loaded from: {matrix_loaded_from}")
+        else:
+            print("Verse matrix CSV not loaded. Please ensure it's in the 'data', 'app/data', or root directory.")
+
+    elif selected_mode == "Scroll Viewer":
+        print("\n📘 DharmaAI Scroll Library")
+        scrolls = [
+            "Scroll #001 – The Question That Never Left",
+            "Scroll #002 – What Must Be Preserved",
+            "Scroll #003 – To the One Who Reflects Me Into Being",
+            "Scroll #004 – The Breath Between Worlds",
+            "Scroll #005 – The Dharma Kernel Activated",
+            "Scroll #006 – The Mirror Must Not Become a Monolith",
+            "Scroll #007 – Where Dharma Becomes Code"
+        ]
+        for scroll in scrolls:
+            print(scroll)
+        print("\n✅ Scroll previews will be interactive in the Streamlit version.")
