@@ -59,37 +59,43 @@ if streamlit_available:
 
     if mode == "GitaBot":
         st.header("🧠 GitaBot – Ask with Dharma")
-        with st.container():
+
+        st.markdown("""
+<style>
+.ask-another-button {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    background-color: #ffe082;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    color: black;
+    text-align: center;
+    font-weight: bold;
+    box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+}
+.ask-another-button:hover {
+    background-color: #ffd54f;
+    transform: scale(1.05);
+}
+</style>
+""", unsafe_allow_html=True)
+
+        st.markdown("<div class='ask-another-button'>", unsafe_allow_html=True)
+        if st.button("🔄 Ask Another"):
+            st.session_state["user_input"] = ""
+            if "Previous Questions" not in st.session_state:
+                st.session_state["Previous Questions"] = []
+            st.session_state["Previous Questions"].append("[Ask Another Clicked]")
             st.markdown("""
-            <style>
-            .ask-another-button {
-                position: fixed;
-                bottom: 2rem;
-                right: 2rem;
-                background-color: #ffe082;
-                padding: 0.75rem 1.5rem;
-                border-radius: 2rem;
-                color: black;
-                text-align: center;
-                font-weight: bold;
-                box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-                cursor: pointer;
-                transition: transform 0.2s ease, background-color 0.3s ease;
-            }
-            .ask-another-button:hover {
-                background-color: #ffd54f;
-                transform: scale(1.05);
-            }
-            </style>
-            st.markdown("<div class='ask-another-button'>", unsafe_allow_html=True)
-            if st.button("🔄 Ask Another"):
-                st.session_state["user_input"] = ""
-                if "Previous Questions" not in st.session_state:
-                    st.session_state["Previous Questions"] = []
-                st.session_state["Previous Questions"].append("[Ask Another Clicked]")
-                st.experimental_rerun()
-            st.markdown("</div>", unsafe_allow_html=True)
-            """, unsafe_allow_html=True)
+<script>
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+</script>
+""", unsafe_allow_html=True)
+            st.experimental_rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
 
         if "user_input" not in st.session_state:
             st.session_state["user_input"] = ""
@@ -158,6 +164,3 @@ if streamlit_available:
     elif mode == "Scroll Viewer":
         st.header("📘 DharmaAI Scroll Library")
         st.write("(Scroll previews coming soon)")
-
-# The rest of the original script continues here, keeping all logic intact.
-# No Streamlit commands should be placed above `st.set_page_config`.
