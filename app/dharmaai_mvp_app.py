@@ -169,6 +169,11 @@ if streamlit_available:
             st.markdown(f"**Mode:** {invocation_mode}")
             st.markdown("---")
             response = generate_gita_response(invocation_mode, df_matrix, user_input)
+            num_input_tokens = len(user_input.split()) * 1.25  # Approx input tokens
+            num_output_tokens = len(response.split()) * 1.25  # Approx output tokens
+            total_tokens = int(num_input_tokens + num_output_tokens)
+            estimated_cost = round((num_input_tokens * 0.0005 + num_output_tokens * 0.0015) / 1000, 6)
+
             if "Usage Journal" not in st.session_state:
                 st.session_state["Usage Journal"] = []
             st.session_state["Usage Journal"].append({
@@ -177,6 +182,25 @@ if streamlit_available:
                 "tokens": total_tokens,
                 "cost_usd": estimated_cost
             })
+
+            # Alert on thresholds
+            total_spent = sum(entry['cost_usd'] for entry in st.session_state["Usage Journal"])
+            if total_spent > 1:
+                st.warning("⚠️ You’ve crossed $1 in estimated API costs this session.")
+            if total_spent > 5:
+                st.error("🛑 Estimated session cost exceeds $5. Consider pausing or reviewing prompts.")
+
+            # Download button
+            if len(st.session_state["Usage Journal"]) > 0:
+                import pandas as pd
+                usage_df = pd.DataFrame(st.session_state["Usage Journal"])
+                csv = usage_df.to_csv(index=False).encode("utf-8")
+                st.download_button(
+                    label="📥 Download Usage Journal as CSV",
+                    data=csv,
+                    file_name="dharmaai_usage_log.csv",
+                    mime="text/csv"
+                )
             num_input_tokens = len(user_input.split()) * 1.25  # Approx input tokens
             num_output_tokens = len(response.split()) * 1.25  # Approx output tokens
             total_tokens = int(num_input_tokens + num_output_tokens)
@@ -200,7 +224,31 @@ if streamlit_available:
     elif mode == "Usage Insights":
         st.header("📊 Token & Cost Usage Journal")
         if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
-            st.dataframe(st.session_state["Usage Journal"])
+            usage_df = pd.DataFrame(st.session_state["Usage Journal"])
+            st.dataframe(usage_df)
+            st.markdown("---")
+            st.download_button(
+                label="📥 Download Usage Log as CSV",
+                data=usage_df.to_csv(index=False).encode("utf-8"),
+                file_name="dharmaai_usage_log.csv",
+                mime="text/csv"
+            )
+
+            # Generate Scroll #011
+            scroll_md = """# Scroll #011 – The Ledger of Reflection
+
+This scroll records all conscience-based invocations during this session.
+
+"""
+            scroll_md += usage_df.to_markdown(index=False)
+            st.download_button(
+                label="📜 Download Scroll #011 – The Ledger of Reflection",
+                data=scroll_md.encode("utf-8"),
+                file_name="scroll_011_ledger_of_reflection.md",
+                mime="text/markdown"
+            )
+
+            st.success("Scroll #011 is now sealed.🪔")
         else:
             st.info("No usage recorded yet this session.")
 
