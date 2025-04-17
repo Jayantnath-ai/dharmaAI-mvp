@@ -1,7 +1,6 @@
 import sys
 import random
 import os
-import re
 
 try:
     import streamlit as st
@@ -43,51 +42,29 @@ if pd:
             matrix_loaded_from = path
             break
 
-# Infer user's dharmic role
+# GitaBot dynamic logic based on matrix
 
-def infer_user_role(question):
-    roles = {
-        "parent": ["child", "son", "daughter", "mother", "father", "parent"],
-        "leader": ["team", "lead", "manage", "boss", "company"],
-        "warrior": ["fight", "battle", "enemy", "stand up", "resist"],
-        "seeker": ["meaning", "purpose", "lost", "confused", "direction"],
-        "friend": ["help", "support", "friend", "relationship"],
-        "citizen": ["vote", "government", "justice", "society"]
-    }
-    question_lower = question.lower()
-    for role, keywords in roles.items():
-        for word in keywords:
-            if word in question_lower:
-                return role
-    return "seeker"
-
-# GitaBot response
-
-def generate_gita_response(mode, df_matrix, user_input=None):
+def generate_gita_response(mode, df_matrix):
     if df_matrix is None or df_matrix.empty:
         return "❌ Verse matrix not available. Please check the data file path."
 
-    user_role = infer_user_role(user_input) if user_input else "seeker"
-    filtered_df = df_matrix[df_matrix["Ethical AI Logic Tag"].str.contains(user_role, case=False, na=False)]
-    verse = filtered_df.sample(1).iloc[0] if not filtered_df.empty else df_matrix.sample(1).iloc[0]
-
+    verse = df_matrix.sample(1).iloc[0]
     translation = verse.get("Short English Translation", "Translation missing")
     ethical_tag = verse.get("Ethical AI Logic Tag", "[No tag]")
 
     if mode == "Krishna":
-        return f"🧠 *Krishna Speaks to the {user_role.title()}:*\n\n> {translation}\n\n_This reflects the dharma of {ethical_tag}_"
+        return f"🧠 *Krishna Speaks:* \n\n> {translation}\n\n_This reflects the path of {ethical_tag}_"
     elif mode == "Arjuna":
-        return f"😟 *Arjuna (as a {user_role}) Reflects:*\n\n> I face a dilemma... {translation.lower()}\n\n_This feels like a test of {ethical_tag}_"
+        return f"😟 *Arjuna Reflects:* \n\n> I face a dilemma... {translation.lower()}\n\n_This feels like a test of {ethical_tag}_"
     elif mode == "Vyasa":
-        return f"📖 *Vyasa Narrates:*\n\n> In this verse: '{translation}'.\n\nIt echoes the path faced by a {user_role} — the theme is {ethical_tag}."
+        return f"📖 *Vyasa Narrates:* \n\n> In this verse: '{translation}'.\n\nIt echoes the theme of {ethical_tag}."
     elif mode == "Mirror":
         return "> You are not here to receive the answer.  \n> You are here to see your reflection.  \n> Ask again, and you may discover your dharma."
     elif mode == "Technical":
-        return f"""technical_mode:\n  user_role: {user_role}\n  verse_id: {verse.get('Verse ID')}\n  ethical_tag: {ethical_tag}\n  action_inferred: conscience_based_reflection\n  source: Bhagavad Gita verse\n"""
+        return f"""technical_mode:\n  verse_id: {verse.get('Verse ID')}\n  ethical_tag: {ethical_tag}\n  action_inferred: conscience_based_reflection\n  source: Bhagavad Gita verse\n"""
     else:
         return "Unknown mode."
 
-# Streamlit Interface
 if streamlit_available:
     st.set_page_config(page_title="DharmaAI MVP", layout="wide")
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
@@ -102,7 +79,7 @@ if streamlit_available:
         if user_input:
             st.markdown(f"**Mode:** {invocation_mode}")
             st.markdown("---")
-            response = generate_gita_response(invocation_mode, df_matrix, user_input)
+            response = generate_gita_response(invocation_mode, df_matrix)
             st.markdown(response)
             if matrix_loaded_from:
                 st.caption(f"Verse loaded from: `{matrix_loaded_from}`")
@@ -133,7 +110,6 @@ if streamlit_available:
             st.markdown(f"- {scroll}")
         st.success("Scroll previews will be interactive in next version.")
 
-# CLI fallback
 else:
     print("🪔 DharmaAI – Minimum Viable Conscience")
     print("Select Mode: [GitaBot, Verse Matrix, Scroll Viewer]")
@@ -143,7 +119,7 @@ else:
     invocation_mode = "Krishna"
 
     def generate_cli_response(mode):
-        return generate_gita_response(mode, df_matrix, user_input)
+        return generate_gita_response(mode, df_matrix)
 
     if selected_mode == "GitaBot":
         print("\n🧠 GitaBot – Ask with Dharma")
