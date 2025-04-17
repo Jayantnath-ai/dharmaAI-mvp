@@ -158,7 +158,7 @@ if streamlit_available:
     st.set_page_config(page_title="DharmaAI MVP", layout="wide")
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
 
-    mode = st.sidebar.radio("Select Mode", ["GitaBot", "Verse Matrix", "Scroll Viewer"])
+    mode = st.sidebar.radio("Select Mode", ["GitaBot", "Verse Matrix", "Usage Insights", "Scroll Viewer"])
 
     if mode == "GitaBot":
         st.header("🧠 GitaBot – Ask with Dharma")
@@ -169,6 +169,19 @@ if streamlit_available:
             st.markdown(f"**Mode:** {invocation_mode}")
             st.markdown("---")
             response = generate_gita_response(invocation_mode, df_matrix, user_input)
+            if "Usage Journal" not in st.session_state:
+                st.session_state["Usage Journal"] = []
+            st.session_state["Usage Journal"].append({
+                "mode": invocation_mode,
+                "input": user_input,
+                "tokens": total_tokens,
+                "cost_usd": estimated_cost
+            })
+            num_input_tokens = len(user_input.split()) * 1.25  # Approx input tokens
+            num_output_tokens = len(response.split()) * 1.25  # Approx output tokens
+            total_tokens = int(num_input_tokens + num_output_tokens)
+            estimated_cost = round((num_input_tokens * 0.0005 + num_output_tokens * 0.0015) / 1000, 6)
+            st.caption(f"Estimated token usage: {total_tokens} tokens (~${estimated_cost} USD)")
             st.markdown(response)
             if matrix_loaded_from:
                 st.caption(f"Verse loaded from: `{matrix_loaded_from}`")
@@ -178,11 +191,18 @@ if streamlit_available:
     elif mode == "Verse Matrix":
         st.header("📜 Gita × DharmaAI Verse Matrix")
         if df_matrix is not None:
-            st.dataframe(df_matrix.head(50), use_container_width=True)
+            st.dataframe(df_matrix, use_container_width=True)
             if matrix_loaded_from:
                 st.caption(f"Verse matrix loaded from: `{matrix_loaded_from}`")
         else:
             st.warning("Verse matrix CSV not loaded. Please ensure it's in the 'data', 'app/data', or root directory.")
+
+    elif mode == "Usage Insights":
+        st.header("📊 Token & Cost Usage Journal")
+        if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
+            st.dataframe(st.session_state["Usage Journal"])
+        else:
+            st.info("No usage recorded yet this session.")
 
     elif mode == "Scroll Viewer":
         st.header("📘 DharmaAI Scroll Library")
