@@ -32,7 +32,13 @@ matrix_loaded_from = None
 if pd:
     for path in possible_paths:
         if os.path.exists(path):
-            df_matrix = pd.read_csv(path)
+            try:
+                df_matrix = pd.read_csv(path, encoding='utf-8')
+            except UnicodeDecodeError:
+                try:
+                    df_matrix = pd.read_csv(path, encoding='utf-8-sig')
+                except UnicodeDecodeError:
+                    df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
             matrix_loaded_from = path
             break
 
