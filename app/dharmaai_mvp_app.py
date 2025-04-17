@@ -43,124 +43,74 @@ if openai_available:
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 
-# MVP App UI Starts Here
-if streamlit_available:
-    st.title("🪔 DharmaAI – Minimum Viable Conscience")
+# Load verse matrix
+matrix_paths = ["data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv", "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv", "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"]
+df_matrix = None
+for path in matrix_paths:
+    if os.path.exists(path):
+        try:
+            df_matrix = pd.read_csv(path, encoding='utf-8')
+        except UnicodeDecodeError:
+            df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
+        break
 
-    if "ask_another" in st.session_state:
-        st.session_state["user_input"] = ""
-        if "Previous Questions" not in st.session_state:
-            st.session_state["Previous Questions"] = []
-        st.session_state["Previous Questions"].append("[Ask Another Clicked]")
-        del st.session_state["ask_another"]
-        st.experimental_rerun()
+# Define generate_gita_response inline
+def generate_gita_response(mode, df_matrix, user_input=None):
+    if not user_input or len(user_input.strip()) < 5:
+        return "🛑 Please ask a more complete or meaningful question."
 
-    mode = st.sidebar.radio("Select Mode", ["GitaBot", "Verse Matrix", "Usage Insights", "Scroll Viewer"])
+    import numpy as np
 
-    if mode == "GitaBot":
-        st.header("🧠 GitaBot – Ask with Dharma")
+    def get_embedding(text):
+        np.random.seed(abs(hash(text)) % (2**32))
+        return np.random.rand(1536)
 
-        st.markdown("""
-<style>
-.ask-another-button {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background-color: #ffe082;
-    padding: 0.75rem 1.5rem;
-    border-radius: 2rem;
-    color: black;
-    text-align: center;
-    font-weight: bold;
-    box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.3s ease;
-}
-.ask-another-button:hover {
-    background-color: #ffd54f;
-    transform: scale(1.05);
-}
-</style>
-""", unsafe_allow_html=True)
+    def cosine_similarity(vec1, vec2):
+        return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
 
-        st.markdown("<div class='ask-another-button'>", unsafe_allow_html=True)
-        if st.button("🔄 Ask Another"):
-            st.session_state["user_input"] = ""
-            if "Previous Questions" not in st.session_state:
-                st.session_state["Previous Questions"] = []
-            st.session_state["Previous Questions"].append("[Ask Another Clicked]")
-            st.markdown("""
-<script>
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-</script>
-""", unsafe_allow_html=True)
-            st.experimental_rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
+    user_role = "seeker"
+    token_multiplier = 1.25
+    prompt_tokens = int(len(user_input.split()) * token_multiplier)
+    response_tokens = 120
+    total_tokens = prompt_tokens + response_tokens
+    estimated_cost = round((total_tokens / 1000) * 0.002, 6)
 
-        if "user_input" not in st.session_state:
-            st.session_state["user_input"] = ""
+    if "Usage Journal" not in st.session_state:
+        st.session_state["Usage Journal"] = []
 
-        user_input = st.text_input("Ask a question or describe a dilemma:", value=st.session_state["user_input"], key="user_input")
-        invocation_mode = st.selectbox(
-            "Choose Invocation Mode",
-            options=[
-                "Krishna", "Krishna-GPT", "Krishna-Gemini",
-                "Arjuna", "Vyasa", "Mirror", "Technical"
-            ],
-            index=0,
-            format_func=lambda mode: {
-                "Krishna": "🧠 Krishna – Classic dharma response",
-                "Krishna-GPT": "🤖 Krishna-GPT – OpenAI-powered oracle",
-                "Krishna-Gemini": "🌟 Krishna-Gemini – Gemini-powered reflection",
-                "Arjuna": "😟 Arjuna – Human dilemma",
-                "Vyasa": "📖 Vyasa – Epic narrator",
-                "Mirror": "🪞 Mirror – See your own reflection",
-                "Technical": "🔧 Technical – YAML debug mode"
-            }.get(mode, mode)
-        )
+    response = ""
+    verse_info = None
+    if df_matrix is not None and not df_matrix.empty:
+        if 'embedding' not in df_matrix.columns:
+            df_matrix['embedding'] = df_matrix['Short English Translation'].apply(lambda x: get_embedding(str(x)))
+        user_embedding = get_embedding(user_input)
+        df_matrix['similarity'] = df_matrix['embedding'].apply(lambda emb: cosine_similarity(user_embedding, emb))
+        verse_info = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
 
-        submitted = st.button("🔍 Submit to GitaBot")
-        clear = st.button("❌ Clear Question")
+    if mode == "Krishna-GPT":
+        response = f"**🤖 Krishna-GPT says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response here based on dharma logic]'}"
+    elif mode == "Krishna-Gemini":
+        response = f"**🌟 Krishna-Gemini reflects:**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated Gemini response to question]'}"
+    elif mode == "Krishna":
+        response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
+    elif mode == "Arjuna":
+        response = f"**😟 Arjuna worries:**\n\n> What should I do about _'{user_input}'_?"
+    elif mode == "Vyasa":
+        response = f"**📖 Vyasa narrates:**\n\n> In the echoes of history, a seeker once asked: '{user_input}'"
+    elif mode == "Mirror":
+        response = "> You are not here to receive the answer.\n> You are here to see your reflection.\n> Ask again, and you may discover your dharma."
+    elif mode == "Technical":
+        response = f"🔧 Technical Mode:\nquestion: '{user_input}'\nrole_inferred: {user_role}\nmode_used: {mode}"
 
-        if clear:
-            st.session_state["user_input"] = ""
-            st.experimental_rerun()
+    st.session_state["Usage Journal"].append({
+        "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
+        "mode": mode,
+        "role": user_role,
+        "question": user_input,
+        "response": response,
+        "tokens": total_tokens,
+        "cost_usd": estimated_cost,
+        "model": st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo")
+    })
 
-        if submitted and user_input:
-            st.markdown(f"**Mode:** {invocation_mode}")
-            st.markdown("---")
-            response = generate_gita_response(invocation_mode, df_matrix, user_input)
-            st.markdown(response)
-            st.markdown("---")
-            if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
-                latest = st.session_state["Usage Journal"][-1]
-                st.caption(f"💬 Model: `{latest.get('model')}` | 🧮 Tokens: `{latest.get('tokens')}` | 💵 Cost: `${latest.get('cost_usd')}`")
-                if 'verse_id' in latest:
-                    st.caption(f"📘 Source: Verse {latest['verse_id']}")
-
-        if "Previous Questions" not in st.session_state:
-            st.session_state["Previous Questions"] = []
-        if submitted and user_input:
-            st.session_state["Previous Questions"].append(user_input)
-
-        if st.session_state["Previous Questions"]:
-            with st.expander("🕰 Recent Questions"):
-                for i, q in enumerate(reversed(st.session_state["Previous Questions"][-5:])):
-                    col1, col2 = st.columns([5, 1])
-                    with col1:
-                        st.markdown(f"- {q}")
-                    with col2:
-                        if st.button("🔁", key=f"reuse_{i}"):
-                            st.session_state["user_input"] = q
-
-    elif mode == "Verse Matrix":
-        st.header("📜 Gita × DharmaAI Verse Matrix")
-        st.write("(Matrix UI rendering placeholder)")
-
-    elif mode == "Usage Insights":
-        st.header("📊 Token & Cost Usage Journal")
-        st.write("(Usage log rendering placeholder)")
-
-    elif mode == "Scroll Viewer":
-        st.header("📘 DharmaAI Scroll Library")
-        st.write("(Scroll previews coming soon)")
+    return response
