@@ -1,5 +1,6 @@
 import sys
 import random
+import os
 
 try:
     import streamlit as st
@@ -19,19 +20,27 @@ try:
 except:
     memory_core = "YAML memory core not found."
 
-try:
-    if pd:
-        df_matrix = pd.read_csv("gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv")
-    else:
-        df_matrix = None
-except:
-    df_matrix = None
+# Attempt to load verse matrix from multiple locations
+possible_paths = [
+    os.path.join("data", "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
+    os.path.join("app", "data", "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
+    "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"
+]
+df_matrix = None
+matrix_loaded_from = None
+
+if pd:
+    for path in possible_paths:
+        if os.path.exists(path):
+            df_matrix = pd.read_csv(path)
+            matrix_loaded_from = path
+            break
 
 # GitaBot dynamic logic based on matrix
 
 def generate_gita_response(mode, df_matrix):
     if df_matrix is None or df_matrix.empty:
-        return "Verse matrix not available. Please check the data source."
+        return "❌ Verse matrix not available. Please check the data file path."
 
     verse = df_matrix.sample(1).iloc[0]
     translation = verse.get("Short English Translation", "Translation missing")
@@ -66,13 +75,19 @@ if streamlit_available:
             st.markdown("---")
             response = generate_gita_response(invocation_mode, df_matrix)
             st.markdown(response)
+            if matrix_loaded_from:
+                st.caption(f"Verse loaded from: `{matrix_loaded_from}`")
+            else:
+                st.error("❌ Verse matrix file not found in expected paths.")
 
     elif mode == "Verse Matrix":
         st.header("📜 Gita × DharmaAI Verse Matrix")
         if df_matrix is not None:
             st.dataframe(df_matrix.head(50), use_container_width=True)
+            if matrix_loaded_from:
+                st.caption(f"Verse matrix loaded from: `{matrix_loaded_from}`")
         else:
-            st.warning("Verse matrix CSV not loaded.")
+            st.warning("Verse matrix CSV not loaded. Please ensure it's in the 'data', 'app/data', or root directory.")
 
     elif mode == "Scroll Viewer":
         st.header("📘 DharmaAI Scroll Library")
@@ -105,13 +120,19 @@ else:
         print(f"User Question: {user_input}")
         print(f"Invocation Mode: {invocation_mode}\n")
         print(generate_cli_response(invocation_mode))
+        if matrix_loaded_from:
+            print(f"Verse loaded from: {matrix_loaded_from}")
+        else:
+            print("❌ Verse matrix file not found in expected paths.")
 
     elif selected_mode == "Verse Matrix":
         print("\n📜 Gita × DharmaAI Verse Matrix")
         if df_matrix is not None:
             print(df_matrix.head(5).to_string(index=False))
+            if matrix_loaded_from:
+                print(f"Verse matrix loaded from: {matrix_loaded_from}")
         else:
-            print("Verse matrix CSV not loaded.")
+            print("Verse matrix CSV not loaded. Please ensure it's in the 'data', 'app/data', or root directory.")
 
     elif selected_mode == "Scroll Viewer":
         print("\n📘 DharmaAI Scroll Library")
