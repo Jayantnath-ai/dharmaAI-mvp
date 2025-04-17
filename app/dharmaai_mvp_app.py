@@ -76,13 +76,16 @@ def infer_user_role(question):
 def gpt_krishna_response(user_input, user_role):
     if not openai_available:
         return "❌ OpenAI module not available in this environment."
+
     prompt = f"""
 You are Krishna from the Bhagavad Gita. The user is a {user_role}. They asked: \"{user_input}\".
 Provide a contextual response rooted in dharma. Include one relevant Gita verse (English) and explain how it applies.
 End with a reminder of detached action or duty, if appropriate.
 """
     try:
-        response = openai.ChatCompletion.create(
+        from openai import OpenAI
+        client = OpenAI()
+        response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a dharmic teacher speaking as Krishna."},
