@@ -43,5 +43,27 @@ if openai_available:
 
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 
+# MVP App UI Starts Here
+if streamlit_available:
+    st.title("🪔 DharmaAI – Minimum Viable Conscience")
+
+    mode = st.sidebar.radio("Select Mode", ["GitaBot", "Verse Matrix", "Usage Insights", "Scroll Viewer"])
+
+    if mode == "GitaBot":
+        st.header("🧠 GitaBot – Ask with Dharma")
+        st.write("(GitaBot interaction panel will appear here once the full UI logic is restored)")
+
+    elif mode == "Verse Matrix":
+        st.header("📜 Gita × DharmaAI Verse Matrix")
+        st.write("(Matrix UI rendering placeholder)")
+
+    elif mode == "Usage Insights":
+        st.header("📊 Token & Cost Usage Journal")
+        st.write("(Usage log rendering placeholder)")
+
+    elif mode == "Scroll Viewer":
+        st.header("📘 DharmaAI Scroll Library")
+        st.write("(Scroll previews coming soon)")
+
 # The rest of the original script continues here, keeping all logic intact.
 # No Streamlit commands should be placed above `st.set_page_config`.
