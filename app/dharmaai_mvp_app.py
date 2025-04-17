@@ -22,7 +22,7 @@ except ImportError:
 
 
 if openai_available:
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+    openai.api_key = os.environ.get("OPENAI_API_KEY", "")
 gemini_api_key = os.getenv("GEMINI_API_KEY")
 
 # Load YAML data if available
