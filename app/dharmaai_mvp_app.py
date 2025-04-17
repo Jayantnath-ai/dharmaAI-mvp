@@ -26,6 +26,22 @@ try:
 except:
     df_matrix = None
 
+# GitaBot response logic
+GITABOT_RESPONSES = {
+    "Krishna": "You must act, Jayant, but without attachment to the result. This is the way of detached action.",
+    "Arjuna": "I am torn. If I act, I hurt others. If I don’t, I betray myself. How do I know what is right?",
+    "Vyasa": "In the epic tale, duty and doubt often walked hand in hand. Each verse is a mirror to the soul.",
+    "Mirror": "> You are not here to receive the answer.  \n> You are here to see your reflection.  \n> Ask again, and you may discover your dharma.",
+    "Technical": """
+technical_mode:
+  fork_trigger: paradox_001
+  action_taken: detached_action
+  scroll_reference: Where Dharma Becomes Code
+  conscience_log: true
+  kernel: dharma_kernel
+"""
+}
+
 if streamlit_available:
     st.set_page_config(page_title="DharmaAI MVP", layout="wide")
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
@@ -40,24 +56,7 @@ if streamlit_available:
         if user_input:
             st.markdown(f"**Mode:** {invocation_mode}")
             st.markdown("---")
-            if invocation_mode == "Mirror":
-                st.markdown("""
-> You are not here to receive the answer.  
-> You are here to see your reflection.  
-> Ask again, and you may discover your dharma.
-""")
-            elif invocation_mode == "Technical":
-                st.markdown("**Sample YAML Response:**")
-                st.code("""
-technical_mode:
-  fork_trigger: paradox_001
-  action_taken: detached_action
-  scroll_reference: Where Dharma Becomes Code
-  conscience_log: true
-  kernel: dharma_kernel
-""", language="yaml")
-            else:
-                st.markdown("This mode will return scroll-based responses soon.")
+            st.markdown(GITABOT_RESPONSES.get(invocation_mode, "This mode will return scroll-based responses soon."))
 
     elif mode == "Verse Matrix":
         st.header("📜 Gita × DharmaAI Verse Matrix")
@@ -93,25 +92,7 @@ else:
         print("\n🧠 GitaBot – Ask with Dharma")
         print(f"User Question: {user_input}")
         print(f"Invocation Mode: {invocation_mode}\n")
-
-        if invocation_mode == "Mirror":
-            print("You are not here to receive the answer.")
-            print("You are here to see your reflection.")
-            print("Ask again, and you may discover your dharma.")
-
-        elif invocation_mode == "Technical":
-            print("Sample YAML Response:")
-            print("""
-technical_mode:
-  fork_trigger: paradox_001
-  action_taken: detached_action
-  scroll_reference: Where Dharma Becomes Code
-  conscience_log: true
-  kernel: dharma_kernel
-""")
-
-        else:
-            print("This mode will return scroll-based responses soon.")
+        print(GITABOT_RESPONSES.get(invocation_mode, "This mode will return scroll-based responses soon."))
 
     elif selected_mode == "Verse Matrix":
         print("\n📜 Gita × DharmaAI Verse Matrix")
