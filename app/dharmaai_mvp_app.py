@@ -205,6 +205,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     else:
         return "Unknown mode."
 
+import streamlit as st
+st.set_page_config(page_title="DharmaAI MVP", layout="wide")
+
 if streamlit_available:
-    import streamlit as st
-    st.set_page_config(page_title="DharmaAI MVP", layout="wide")
