@@ -47,13 +47,49 @@ gemini_api_key = os.getenv("GEMINI_API_KEY")
 if streamlit_available:
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
 
+    if "ask_another" in st.session_state:
+        st.session_state["user_input"] = ""
+        if "Previous Questions" not in st.session_state:
+            st.session_state["Previous Questions"] = []
+        st.session_state["Previous Questions"].append("[Ask Another Clicked]")
+        del st.session_state["ask_another"]
+        st.experimental_rerun()
+
     mode = st.sidebar.radio("Select Mode", ["GitaBot", "Verse Matrix", "Usage Insights", "Scroll Viewer"])
 
     if mode == "GitaBot":
         st.header("🧠 GitaBot – Ask with Dharma")
+        with st.container():
+            st.markdown("""
+            <style>
+            .ask-another-button {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                background-color: #ffe082;
+                padding: 0.75rem 1.5rem;
+                border-radius: 2rem;
+                color: black;
+                text-align: center;
+                font-weight: bold;
+                box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+                cursor: pointer;
+                transition: transform 0.2s ease, background-color 0.3s ease;
+            }
+            .ask-another-button:hover {
+                background-color: #ffd54f;
+                transform: scale(1.05);
+            }
+            </style>
+            <form action="" method="post">
+                <button class="ask-another-button" type="submit" name="ask_another">🔄 Ask Another</button>
+            </form>
+            """, unsafe_allow_html=True)
 
         if "user_input" not in st.session_state:
             st.session_state["user_input"] = ""
+
+        user_input = st.text_input("Ask a question or describe a dilemma:", value=st.session_state["user_input"], key="user_input")
         invocation_mode = st.selectbox(
             "Choose Invocation Mode",
             options=[
@@ -71,7 +107,7 @@ if streamlit_available:
                 "Technical": "🔧 Technical – YAML debug mode"
             }.get(mode, mode)
         )
-        user_input = st.text_input("Ask a question or describe a dilemma:", value=st.session_state["user_input"], key="user_input")
+
         submitted = st.button("🔍 Submit to GitaBot")
         clear = st.button("❌ Clear Question")
 
