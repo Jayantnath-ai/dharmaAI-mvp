@@ -20,8 +20,7 @@ try:
 except ImportError:
     pd = None
 
-from dotenv import load_dotenv
-load_dotenv()
+
 if openai_available:
     openai.api_key = os.getenv("OPENAI_API_KEY")
 gemini_api_key = os.getenv("GEMINI_API_KEY")
