@@ -163,9 +163,15 @@ if streamlit_available:
     if mode == "GitaBot":
         st.header("🧠 GitaBot – Ask with Dharma")
         user_input = st.text_input("Ask a question or describe a dilemma:")
+        submitted = st.button("🔍 Submit to GitaBot")
+        clear = st.button("❌ Clear Question")
         invocation_mode = st.selectbox("Choose Invocation Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
 
-        if user_input:
+        if clear:
+            user_input = ""
+            st.experimental_rerun()
+
+        if submitted and user_input:
             st.markdown(f"**Mode:** {invocation_mode}")
             st.markdown("---")
             response = generate_gita_response(invocation_mode, df_matrix, user_input)
