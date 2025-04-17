@@ -84,7 +84,7 @@ End with a reminder of detached action or duty, if appropriate.
 """
     try:
         from openai import OpenAI
-        client = OpenAI()
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""), project=os.environ.get("OPENAI_PROJECT_ID", ""))
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
