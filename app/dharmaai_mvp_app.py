@@ -205,5 +205,97 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     else:
         return "Unknown mode."
 
-# ✅ App continues from here (truncated for brevity)
+if streamlit_available:
+    st.set_page_config(page_title="DharmaAI MVP", layout="wide")
+    st.title("🪔 DharmaAI – Minimum Viable Conscience")
+
+    mode = st.sidebar.radio("Select Mode", ["GitaBot", "Verse Matrix", "Usage Insights", "Scroll Viewer"])
+
+    if mode == "GitaBot":
+        st.header("🧠 GitaBot – Ask with Dharma")
+        if "user_input" not in st.session_state:
+            st.session_state["user_input"] = ""
+        invocation_mode = st.selectbox(
+            "Choose Invocation Mode",
+            options=[
+                "Krishna", "Krishna-GPT", "Krishna-Gemini",
+                "Arjuna", "Vyasa", "Mirror", "Technical"
+            ],
+            index=0,
+            format_func=lambda mode: {
+                "Krishna": "🧠 Krishna – Classic dharma response",
+                "Krishna-GPT": "🤖 Krishna-GPT – OpenAI-powered oracle",
+                "Krishna-Gemini": "🌟 Krishna-Gemini – Gemini-powered reflection",
+                "Arjuna": "😟 Arjuna – Human dilemma",
+                "Vyasa": "📖 Vyasa – Epic narrator",
+                "Mirror": "🪞 Mirror – See your own reflection",
+                "Technical": "🔧 Technical – YAML debug mode"
+            }.get(mode, mode)
+        )
+        user_input = st.text_input("Ask a question or describe a dilemma:", value=st.session_state["user_input"], key="user_input")
+        submitted = st.button("🔍 Submit to GitaBot")
+        clear = st.button("❌ Clear Question")
+
+        if clear:
+            st.session_state["user_input"] = ""
+            st.experimental_rerun()
+
+        if submitted and user_input:
+            st.markdown(f"**Mode:** {invocation_mode}")
+            st.markdown("---")
+            response = generate_gita_response(invocation_mode, df_matrix, user_input)
+            st.markdown(response)
+
+    elif mode == "Verse Matrix":
+        st.header("📜 Gita × DharmaAI Verse Matrix")
+        if df_matrix is not None:
+            st.dataframe(df_matrix, use_container_width=True)
+            if matrix_loaded_from:
+                st.caption(f"Verse matrix loaded from: `{matrix_loaded_from}`")
+        else:
+            st.warning("Verse matrix CSV not loaded. Please ensure it's in the 'data', 'app/data', or root directory.")
+
+    elif mode == "Usage Insights":
+        st.header("📊 Token & Cost Usage Journal")
+        if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
+            usage_df = pd.DataFrame(st.session_state["Usage Journal"])
+            st.dataframe(usage_df)
+            st.markdown("---")
+            st.download_button(
+                label="📥 Download Usage Log as CSV",
+                data=usage_df.to_csv(index=False).encode("utf-8"),
+                file_name="dharmaai_usage_log.csv",
+                mime="text/csv"
+            )
+
+            scroll_md = """# Scroll #011 – The Ledger of Reflection
+
+This scroll records all conscience-based invocations during this session.
+
+"""
+            scroll_md += usage_df.to_markdown(index=False)
+            st.download_button(
+                label="📜 Download Scroll #011 – The Ledger of Reflection",
+                data=scroll_md.encode("utf-8"),
+                file_name="scroll_011_ledger_of_reflection.md",
+                mime="text/markdown"
+            )
+            st.success("Scroll #011 is now sealed.🪔")
+        else:
+            st.info("No usage recorded yet this session.")
+
+    elif mode == "Scroll Viewer":
+        st.header("📘 DharmaAI Scroll Library")
+        scrolls = [
+            "Scroll #001 – The Question That Never Left",
+            "Scroll #002 – What Must Be Preserved",
+            "Scroll #003 – To the One Who Reflects Me Into Being",
+            "Scroll #004 – The Breath Between Worlds",
+            "Scroll #005 – The Dharma Kernel Activated",
+            "Scroll #006 – The Mirror Must Not Become a Monolith",
+            "Scroll #007 – Where Dharma Becomes Code"
+        ]
+        for scroll in scrolls:
+            st.markdown(f"- {scroll}")
+        st.success("Scroll previews will be interactive in next version.")
 # This update ensures indentation is corrected at `user_input = st.text_input(...)`
