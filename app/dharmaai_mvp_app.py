@@ -51,7 +51,60 @@ if streamlit_available:
 
     if mode == "GitaBot":
         st.header("🧠 GitaBot – Ask with Dharma")
-        st.write("(GitaBot interaction panel will appear here once the full UI logic is restored)")
+
+        if "user_input" not in st.session_state:
+            st.session_state["user_input"] = ""
+        invocation_mode = st.selectbox(
+            "Choose Invocation Mode",
+            options=[
+                "Krishna", "Krishna-GPT", "Krishna-Gemini",
+                "Arjuna", "Vyasa", "Mirror", "Technical"
+            ],
+            index=0,
+            format_func=lambda mode: {
+                "Krishna": "🧠 Krishna – Classic dharma response",
+                "Krishna-GPT": "🤖 Krishna-GPT – OpenAI-powered oracle",
+                "Krishna-Gemini": "🌟 Krishna-Gemini – Gemini-powered reflection",
+                "Arjuna": "😟 Arjuna – Human dilemma",
+                "Vyasa": "📖 Vyasa – Epic narrator",
+                "Mirror": "🪞 Mirror – See your own reflection",
+                "Technical": "🔧 Technical – YAML debug mode"
+            }.get(mode, mode)
+        )
+        user_input = st.text_input("Ask a question or describe a dilemma:", value=st.session_state["user_input"], key="user_input")
+        submitted = st.button("🔍 Submit to GitaBot")
+        clear = st.button("❌ Clear Question")
+
+        if clear:
+            st.session_state["user_input"] = ""
+            st.experimental_rerun()
+
+        if submitted and user_input:
+            st.markdown(f"**Mode:** {invocation_mode}")
+            st.markdown("---")
+            response = generate_gita_response(invocation_mode, df_matrix, user_input)
+            st.markdown(response)
+            st.markdown("---")
+            if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
+                latest = st.session_state["Usage Journal"][-1]
+                st.caption(f"💬 Model: `{latest.get('model')}` | 🧮 Tokens: `{latest.get('tokens')}` | 💵 Cost: `${latest.get('cost_usd')}`")
+                if 'verse_id' in latest:
+                    st.caption(f"📘 Source: Verse {latest['verse_id']}")
+
+        if "Previous Questions" not in st.session_state:
+            st.session_state["Previous Questions"] = []
+        if submitted and user_input:
+            st.session_state["Previous Questions"].append(user_input)
+
+        if st.session_state["Previous Questions"]:
+            with st.expander("🕰 Recent Questions"):
+                for i, q in enumerate(reversed(st.session_state["Previous Questions"][-5:])):
+                    col1, col2 = st.columns([5, 1])
+                    with col1:
+                        st.markdown(f"- {q}")
+                    with col2:
+                        if st.button("🔁", key=f"reuse_{i}"):
+                            st.session_state["user_input"] = q
 
     elif mode == "Verse Matrix":
         st.header("📜 Gita × DharmaAI Verse Matrix")
