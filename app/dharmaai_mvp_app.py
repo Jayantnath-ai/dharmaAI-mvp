@@ -102,7 +102,8 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Technical":
         response = f"🔧 Technical Mode:\nquestion: '{user_input}'\nrole_inferred: {user_role}\nmode_used: {mode}"
 
-    st.session_state["Usage Journal"].append({
+    if streamlit_available:
+        st.session_state["Usage Journal"].append({
         "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
         "mode": mode,
         "role": user_role,
@@ -111,6 +112,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         "tokens": total_tokens,
         "cost_usd": estimated_cost,
         "model": st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo")
-    })
+            })
 
     return response
