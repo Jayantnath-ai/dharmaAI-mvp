@@ -91,7 +91,9 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         if openai_available and os.getenv("OPENAI_API_KEY"):
             try:
                 system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance. Verse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Mapping']}'"
-                completion = openai.ChatCompletion.create(
+                from openai import OpenAI
+                client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                completion = client.chat.completions.create(
                     model=st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo"),
                     messages=[
                         {"role": "system", "content": system_prompt},
