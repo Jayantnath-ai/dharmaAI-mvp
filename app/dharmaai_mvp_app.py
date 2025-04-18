@@ -94,13 +94,34 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
     elif mode == "Arjuna":
-        response = f"**😟 Arjuna worries:**\n\n> What should I do about _'{user_input}'_?"
+        response = (
+            f"**😟 Arjuna's Doubt:**\n\n"
+            f"> _What should I do about_ **'{user_input}'**?\n\n"
+            f"Here are three reflections Arjuna would face:\n"
+            f"1. Am I acting from fear or purpose?\n"
+            f"2. What attachment makes this choice difficult?\n"
+            f"3. If I were not afraid, what would duty ask of me?"
+        )
     elif mode == "Vyasa":
-        response = f"**📖 Vyasa narrates:**\n\n> In the echoes of history, a seeker once asked: '{user_input}'"
+        response = (
+            f"**📖 Vyasa Narrates:**\n\n"
+            f"Long ago, a seeker once asked: _'{user_input}'_.\n\n"
+            f"To this, Krishna replied in verse {verse_info['Verse ID'] if verse_info else '[unknown]'}:\n"
+            f"> _{verse_info['Short English Translation'] if verse_info else '[Gita wisdom unavailable]'}_"
+        )
     elif mode == "Mirror":
         response = "> You are not here to receive the answer.\n> You are here to see your reflection.\n> Ask again, and you may discover your dharma."
     elif mode == "Technical":
-        response = f"🔧 Technical Mode:\nquestion: '{user_input}'\nrole_inferred: {user_role}\nmode_used: {mode}"
+        response = (
+            f"🔧 Technical Debug Info:\n"
+            f"- Question: {user_input}\n"
+            f"- Role: {user_role}\n"
+            f"- Matched Verse ID: {verse_info['Verse ID'] if verse_info else 'N/A'}\n"
+            f"- Symbolic Tag: {verse_info['Symbolic Conscience Mapping'] if verse_info else 'N/A'}\n"
+            f"- Cosine Score: {verse_info['similarity']:.3f}\n" if verse_info and 'similarity' in verse_info else "- Cosine Score: N/A\n"
+            f"- Tokens Used: {total_tokens} (Est. ${estimated_cost})\n"
+            f"- Model: {st.session_state.get('OPENAI_MODEL', 'gpt-3.5-turbo')}"
+        )
 
     if streamlit_available:
         st.session_state["Usage Journal"].append({
