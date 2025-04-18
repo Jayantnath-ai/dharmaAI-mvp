@@ -63,8 +63,23 @@ if streamlit_available:
     mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
     user_input = st.text_input("Your ethical question or dilemma:", value=st.session_state.get("user_input", ""), key="user_input")
 
+    # Load verse matrix before generating response
+    matrix_paths = [
+        "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
+        "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
+        "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"
+    ]
+    df_matrix = None
+    for path in matrix_paths:
+        if os.path.exists(path):
+            try:
+                df_matrix = pd.read_csv(path, encoding='utf-8')
+            except UnicodeDecodeError:
+                df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
+            break
+
     if st.button("🔍 Submit"):
-        response = generate_gita_response(mode, df_matrix=None, user_input=user_input)
+        response = generate_gita_response(mode, df_matrix=df_matrix, user_input=user_input)
         st.markdown("""
         <div style='border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; background-color: #f9f9f9; animation: fadeIn 0.8s ease-in;'>
         """, unsafe_allow_html=True)
