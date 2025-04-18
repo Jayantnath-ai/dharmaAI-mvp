@@ -112,7 +112,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             "model": st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo")
         })
 
-        return response
+    return response
 
 
 # Streamlit UI
