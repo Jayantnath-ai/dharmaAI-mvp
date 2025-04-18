@@ -182,3 +182,5 @@ if streamlit_available:
     if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
         with st.expander("🕰️ View Past Interactions"):
             st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
+
+streamlit run app/dharmaai_mvp_app.py
