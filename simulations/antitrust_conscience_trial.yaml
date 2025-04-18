@@ -1,0 +1,13 @@
+fork: antitrust_conscience_trial
+options:
+- choice: Pursue maximum market share
+  dharma: Accelerate access and scale
+  karma: Risk of monopolistic behavior and ethical imbalance
+  scroll_ref: When the Wheel is Broken
+  verse_ref: '3.16'
+- choice: Share infrastructure and enable competitors
+  dharma: Preserve ethical decentralization
+  karma: May slow personal gain, but upholds Dharma
+  scroll_ref: When the Wheel is Broken
+  verse_ref: '3.16'
+question: Should I dominate the market with my AI product?
