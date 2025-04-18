@@ -183,4 +183,3 @@ if streamlit_available:
         with st.expander("🕰️ View Past Interactions"):
             st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
 
-streamlit run app/dharmaai_mvp_app.py
