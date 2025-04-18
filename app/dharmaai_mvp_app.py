@@ -93,6 +93,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
+
     elif mode == "Arjuna":
         response = (
             f"**😟 Arjuna's Doubt:**\n\n"
@@ -102,23 +103,29 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             f"2. What attachment makes this choice difficult?\n"
             f"3. If I were not afraid, what would duty ask of me?"
         )
+
     elif mode == "Vyasa":
+        similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
         response = (
             f"**📖 Vyasa Narrates:**\n\n"
             f"Long ago, a seeker once asked: _'{user_input}'_.\n\n"
-            f"To this, Krishna replied in verse {verse_info['Verse ID'] if verse_info else '[unknown]'}:\n"
+            f"To this, Krishna replied in verse {verse_info['Verse ID'] if verse_info else '[unknown]'}\n"
+            f"(Symbolic Tag: {verse_info['Symbolic Conscience Mapping'] if verse_info else '[N/A]'}, Similarity Score: {similarity_score}):\n"
             f"> _{verse_info['Short English Translation'] if verse_info else '[Gita wisdom unavailable]'}_"
         )
+
     elif mode == "Mirror":
         response = "> You are not here to receive the answer.\n> You are here to see your reflection.\n> Ask again, and you may discover your dharma."
+
     elif mode == "Technical":
+        similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
         response = (
             f"🔧 Technical Debug Info:\n"
             f"- Question: {user_input}\n"
             f"- Role: {user_role}\n"
             f"- Matched Verse ID: {verse_info['Verse ID'] if verse_info else 'N/A'}\n"
             f"- Symbolic Tag: {verse_info['Symbolic Conscience Mapping'] if verse_info else 'N/A'}\n"
-            f"- Cosine Score: {verse_info['similarity']:.3f}\n" if verse_info and 'similarity' in verse_info else "- Cosine Score: N/A\n"
+            f"- Cosine Score: {similarity_score}\n"
             f"- Tokens Used: {total_tokens} (Est. ${estimated_cost})\n"
             f"- Model: {st.session_state.get('OPENAI_MODEL', 'gpt-3.5-turbo')}"
         )
