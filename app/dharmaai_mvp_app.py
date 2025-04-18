@@ -90,7 +90,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     if mode == "Krishna-GPT":
         if openai_available and os.getenv("OPENAI_API_KEY"):
             try:
-                system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance. Verse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Tag']}'"
+                system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance. Verse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Mapping']}'"
                 completion = openai.ChatCompletion.create(
                     model=st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo"),
                     messages=[
@@ -182,7 +182,7 @@ if streamlit_available:
         <div style='border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; background-color: #f9f9f9; animation: fadeIn 0.8s ease-in;'>
         """, unsafe_allow_html=True)
         if 'verse_info' in locals() and verse_info is not None:
-            st.markdown(f"<small>📘 Verse ID: {verse_info['Verse ID']} — <em>{verse_info['Symbolic Conscience Tag']}</em></small>", unsafe_allow_html=True)
+            st.markdown(f"<small>📘 Verse ID: {verse_info['Verse ID']} — <em>{verse_info['Symbolic Conscience Mapping']}</em></small>", unsafe_allow_html=True)
         st.markdown(response)
         st.markdown("</div>", unsafe_allow_html=True)
 
