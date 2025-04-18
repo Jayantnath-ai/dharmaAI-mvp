@@ -80,9 +80,9 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             gemini_api_key = os.getenv("GEMINI_API_KEY")
             if gemini_api_key:
                 genai.configure(api_key=gemini_api_key)
-                chat = genai.GenerativeModel("gemini-pro").start_chat()
+                model = genai.GenerativeModel("gemini-pro")
                 gemini_prompt = f"You are Krishna. Reflect and answer this question with dharmic insight: '{user_input}'. Gita Verse: '{verse_info['Short English Translation']}' tagged '{verse_info['Symbolic Conscience Mapping']}'"
-                gemini_reply = chat.send_message(gemini_prompt)
+                gemini_reply = model.generate_content(gemini_prompt)
                 response = f"**🌟 Krishna-Gemini reflects:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {gemini_reply.text.strip()}"
             else:
                 response = f"⚠️ Gemini API key not set.\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated Gemini response]'}"
