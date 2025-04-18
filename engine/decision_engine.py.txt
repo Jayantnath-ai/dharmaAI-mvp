@@ -1,1 +1,28 @@
-# DharmaAI Decision Engine stub
+# decision_engine.py
+
+def resolve_dharma_fork(context: dict) -> dict:
+    """
+    Resolves a dharma fork using scroll knowledge, user query, and conscience templates
+    """
+    query = context["query"]
+    verse = context.get("verse", "")
+    mode = context.get("mode", "")
+
+    # Placeholder scroll interpretation logic
+    if "kill" in query.lower() or "violence" in query.lower():
+        ethical_path = "Act without hatred; do your duty with detachment."
+        scroll_ref = "Where Even Dharma Trembles – Paradox 2"
+        karmic_trace = "Dilemma between personal conscience and cosmic order"
+        mirror_protocol = "Reflect action through Arjuna’s doubt and Krishna’s guidance"
+    else:
+        ethical_path = "Choose the path that uplifts others while aligning with your dharma."
+        scroll_ref = "Where Even Dharma Trembles – Paradox 1"
+        karmic_trace = "Inaction bears consequences; reflect before withdrawing"
+        mirror_protocol = "Recorded via Mirror Protocol v1.0"
+
+    return {
+        "ethical_path": ethical_path,
+        "scroll_ref": scroll_ref,
+        "karmic_trace": karmic_trace,
+        "mirror_protocol": mirror_protocol
+    }
