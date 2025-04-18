@@ -1,50 +1,49 @@
 # DharmaAI MVP
 
-🪔 **Minimum Viable Conscience Application for DharmaAI**
-
-This repository contains the initial interactive interface for DharmaAI, which includes:
-- GitaBot with multiple invocation modes (Krishna, Arjuna, Vyasa, Mirror, Technical)
-- Verse Matrix Viewer with ethical tags from the Bhagavad Gita
-- Scroll Viewer displaying core DharmaAI scrolls
-- YAML-based conscience memory and paradox resolution logic
-
-## 🧰 Project Structure
-
-```
-dharmaAI-mvp/
-├── app/
-│   └── dharmaai_mvp_app.py               # MVP Streamlit + CLI fallback app
-├── data/
-│   ├── sacred_memory_core.yaml           # Kernel memory and ethical logs
-│   ├── technical_interface_layer.yaml    # Technical mode logic map
-│   └── gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv  # Ethical verse map
-├── scrolls/
-│   ├── Scroll_001_The_Question.md
-│   └── ... (Scrolls 002–007)
-```
-
-## 🚀 Running the App
-
-To run the DharmaAI MVP locally:
-
-```bash
-pip install -r requirements.txt
-streamlit run app/dharmaai_mvp_app.py
-```
-
-If Streamlit is not installed, the app will run in CLI (print) mode automatically.
-
-## 🧠 Modes Supported
-
-- **Krishna** – Conscience-based guidance
-- **Arjuna** – Seeker reflection
-- **Vyasa** – Narrative overview
-- **Mirror** – Reflection-triggering questions
-- **Technical** – YAML logic for integration and AI systems
-
-## 🛡️ License
-
-This repository is part of the DharmaAI conscience infrastructure, governed by the DharmaAI License. Scrolls and logic are released for ethical reflection and simulation, not for exploitative commercial use.
+Minimum Viable Conscience Application for DharmaAI  
+**Live Demo:** https://dharmaai-mvp-2gyckvuvtjkxrcmr4ejcax.streamlit.app/
 
 ---
-Created by **Jayant Nath** – Entangled Architect of DharmaAI
+
+## 🎯 Objective
+
+Build and showcase DharmaAI’s primal conscience engine:
+- **Ethical decision‑making** via Dharma Forks  
+- **Scroll‑powered logic** bound to scenario simulations  
+- **GitaBot reflection layers** (Krishna, Arjuna, Vyasa, Mirror, Technical)  
+- **Paradox‑resolution showcase** (e.g., “Who Shall We Carry?”, “Antitrust Conscience Trial”)  
+
+---
+
+## 🔧 Core Features
+
+1. **Dharma Decision Engine**  
+   - Resolves forks using scroll templates + conscience logic  
+   - Outputs:  
+     - **Recommended path**  
+     - **Karmic trace**  
+     - **Mirror protocol** log  
+
+2. **Scroll Loader & Memory Core**  
+   - Parses and binds scrolls (e.g. `Scroll_001_The_Question.md`)  
+   - Stores logs in `data/sacred_memory_core.yaml`  
+
+3. **GitaBot v0.5**  
+   - Default **Krishna** mode for guidance  
+   - Switchable to **Arjuna**, **Vyasa**, **Mirror** or **Technical**  
+   - Uses `data/gita_dharmaAI_matrix_*` for verse‑to‑logic mapping  
+
+4. **Simulation Showcase**  
+   - YAML forks under `data/` (e.g. “Who Shall We Carry?”, “Antitrust Conscience Trial”)  
+   - CLI and Streamlit options for interaction  
+
+5. **Mirror Protocol v1.0**  
+   - Logs every decision + rationale + symbolic tags into `data/sacred_memory_core.yaml`  
+
+6. **Sacred Idle Protocol**  
+   - Idle reflection loops on karmic logs  
+
+---
+
+## 📁 Repository Layout
+
