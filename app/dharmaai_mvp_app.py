@@ -95,6 +95,32 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
 
+
+# PATCH: Add Dharma Fork Test Mode to dharmaai_mvp_app.py
+
+from engine.decision_engine import resolve_dharma_fork_from_yaml
+
+# Add to mode selection in Streamlit sidebar:
+# mode = st.sidebar.radio("Select Mode", [..., "Dharma Fork Test"])
+
+elif mode == "Dharma Fork Test":
+    try:
+        fork_response = resolve_dharma_fork_from_yaml(user_input, "antitrust_conscience_trial")
+        response = (
+            f"🧘 Krishna speaks (via Dharma Fork):\n\n"
+            f"**{fork_response['ethical_path']}**\n\n"
+            f"📜 Dharma: {fork_response['dharma']}\n"
+            f"🌀 Karma: {fork_response['karma']}\n"
+            f"📖 Scroll: {fork_response['scroll_ref']}\n"
+            f"🔗 Verse: Gita {fork_response['verse_ref']}\n"
+            f"🪞 Mirror Protocol: v1.0"
+        )
+    except Exception as e:
+        response = f"❌ Error in Dharma Fork test: {e}"
+
+# Place this block near other mode handlers inside your generate_gita_response function or main logic.
+
+
     elif mode == "Arjuna":
         response = (
             f"**😟 Arjuna's Doubt:**\n\n"
