@@ -20,6 +20,42 @@ try:
 except ImportError:
     pd = None
 
+# Streamlit UI
+if streamlit_available:
+    st.title("🪔 DharmaAI – Minimum Viable Conscience")
+    st.subheader("Ask a question to GitaBot")
+
+    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
+    user_input = st.text_input("Your ethical question or dilemma:", value="")
+
+    # Load verse matrix
+    matrix_paths = [
+        "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
+        "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
+        "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"
+    ]
+    df_matrix = None
+    for path in matrix_paths:
+        if os.path.exists(path):
+            try:
+                df_matrix = pd.read_csv(path, encoding='utf-8')
+            except UnicodeDecodeError:
+                df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
+            break
+
+    if st.button("🔍 Submit"):
+        response = generate_gita_response(mode, df_matrix=df_matrix, user_input=user_input)
+        st.markdown("""
+        <div style='border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; background-color: #f9f9f9;'>
+        """, unsafe_allow_html=True)
+        st.markdown(response)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
+        with st.expander("🕰️ View Past Interactions"):
+            st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
+
+
 # Define generate_gita_response inline
 def generate_gita_response(mode, df_matrix, user_input=None):
     if not user_input or len(user_input.strip()) < 5:
