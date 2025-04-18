@@ -23,36 +23,73 @@ except ImportError:
 if streamlit_available:
     st.set_page_config(page_title="DharmaAI MVP", layout="wide")
 
-if openai_available:
-    if not os.environ.get("OPENAI_API_KEY"):
-        if streamlit_available:
-            st.warning("⚠️ OpenAI API key not found. Krishna-GPT mode may not work.")
-    openai.api_key = os.environ.get("OPENAI_API_KEY", "")
-    if streamlit_available:
-        if "OPENAI_MODEL" not in st.session_state:
-            st.session_state["OPENAI_MODEL"] = "gpt-3.5-turbo"
-        available_models = ["gpt-3.5-turbo", "gpt-4", "gpt-4o"]
-        selected_model = st.sidebar.selectbox("🧠 Select OpenAI Model", available_models, index=available_models.index(st.session_state["OPENAI_MODEL"]))
-        cost_per_1k = {
-            "gpt-3.5-turbo": "$0.002 (input+output)",
-            "gpt-4": "$0.05–$0.06 (est.)",
-            "gpt-4o": "$0.02–$0.03 (est.)"
+if streamlit_available:
+    st.title("🪔 DharmaAI – Minimum Viable Conscience")
+    st.subheader("Ask a question to GitaBot")
+
+    st.markdown("""
+    <style>
+    .ask-another-button {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background-color: #ffe082;
+        padding: 0.75rem 1.5rem;
+        border-radius: 2rem;
+        color: black;
+        text-align: center;
+        font-weight: bold;
+        box-shadow: 2px 2px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+        transition: transform 0.2s ease, background-color 0.3s ease;
+    }
+    .ask-another-button:hover {
+        background-color: #ffd54f;
+        transform: scale(1.05);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<div class='ask-another-button'>", unsafe_allow_html=True)
+    if st.button("🔄 Ask Another"):
+        st.session_state["user_input"] = ""
+        if "Previous Questions" not in st.session_state:
+            st.session_state["Previous Questions"] = []
+        st.session_state["Previous Questions"].append("[Ask Another Clicked]")
+        st.markdown("<script>window.scrollTo({ top: 0, behavior: 'smooth' });</script>", unsafe_allow_html=True)
+        st.experimental_rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
+    user_input = st.text_input("Your ethical question or dilemma:", value=st.session_state.get("user_input", ""), key="user_input")
+
+    if st.button("🔍 Submit"):
+        response = generate_gita_response(mode, df_matrix=None, user_input=user_input)
+        st.markdown("""
+        <div style='border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; background-color: #f9f9f9; animation: fadeIn 0.8s ease-in;'>
+        """, unsafe_allow_html=True)
+        st.markdown(response)
+
+        import yaml
+        scroll = {
+            "question": user_input,
+            "mode": mode,
+            "response": response,
+            "verse_id": None,
+            "symbolic_tag": None
         }
-        st.sidebar.caption(f"💰 Est. Cost per 1K tokens: {cost_per_1k.get(selected_model, 'Unknown')}")
-        st.session_state["OPENAI_MODEL"] = selected_model
+        st.download_button(
+            label="📜 Download YAML Scroll",
+            data=yaml.dump(scroll, allow_unicode=True),
+            file_name="dharma_scroll.yaml",
+            mime="text/yaml"
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
 
-gemini_api_key = os.getenv("GEMINI_API_KEY")
+    if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
+        with st.expander("🕰️ View Past Interactions"):
+            st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
 
-# Load verse matrix
-matrix_paths = ["data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv", "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv", "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"]
-df_matrix = None
-for path in matrix_paths:
-    if os.path.exists(path):
-        try:
-            df_matrix = pd.read_csv(path, encoding='utf-8')
-        except UnicodeDecodeError:
-            df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
-        break
 
 # Define generate_gita_response inline
 def generate_gita_response(mode, df_matrix, user_input=None):
@@ -111,6 +148,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Krishna-Gemini":
         try:
             import google.generativeai as genai
+            gemini_api_key = os.getenv("GEMINI_API_KEY")
             if gemini_api_key:
                 genai.configure(api_key=gemini_api_key)
                 chat = genai.GenerativeModel("gemini-pro").start_chat()
