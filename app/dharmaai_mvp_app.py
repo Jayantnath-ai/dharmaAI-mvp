@@ -1,8 +1,8 @@
+
 import sys
 import random
 import os
 import re
-from engine.decision_engine import resolve_dharma_fork_from_yaml
 
 try:
     import openai
@@ -95,28 +95,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
 
-
-# PATCH: Add Dharma Fork Test Mode to dharmaai_mvp_app.py
-
-from engine.decision_engine import resolve_dharma_fork_from_yaml
-
-# Add to mode selection in Streamlit sidebar:
-# mode = st.sidebar.radio("Select Mode", [..., "Dharma Fork Test"])
-
-elif mode == "Dharma Fork Test":
-    response = (
-        f"🧘 Krishna speaks (via Dharma Fork):\n\n"
-        f"**Pursue maximum market share**\n\n"
-        f"📜 Dharma: Accelerate access and scale\n"
-        f"🌀 Karma: Risk of monopolistic behavior and ethical imbalance\n"
-        f"📖 Scroll: When the Wheel is Broken\n"
-        f"🔗 Verse: Gita 3.16\n"
-        f"🪞 Mirror Protocol: v1.0"
-    )
-
-# Place this block near other mode handlers inside your generate_gita_response function or main logic.
-
-
     elif mode == "Arjuna":
         response = (
             f"**😟 Arjuna's Doubt:**\n\n"
@@ -140,24 +118,18 @@ elif mode == "Dharma Fork Test":
     elif mode == "Mirror":
         response = "> You are not here to receive the answer.\n> You are here to see your reflection.\n> Ask again, and you may discover your dharma."
 
-    elif mode == "Technical":
     elif mode == "Dharma Fork Test":
-        try:
-            fork_response = resolve_dharma_fork_from_yaml(user_input, "antitrust_conscience_trial")
-            response = f"""
-🧘 Krishna speaks (via Dharma Fork):
+        response = (
+            f"🧘 Krishna speaks (via Dharma Fork):\n\n"
+            f"**Pursue maximum market share**\n\n"
+            f"📜 Dharma: Accelerate access and scale\n"
+            f"🌀 Karma: Risk of monopolistic behavior and ethical imbalance\n"
+            f"📖 Scroll: When the Wheel is Broken\n"
+            f"🔗 Verse: Gita 3.16\n"
+            f"🪞 Mirror Protocol: v1.0"
+        )
 
-**{fork_response['ethical_path']}**
-
-📜 Dharma: {fork_response['dharma']}
-🌀 Karma: {fork_response['karma']}
-📖 Scroll: {fork_response['scroll_ref']}
-🔗 Verse: Gita {fork_response['verse_ref']}
-🪞 Mirror Protocol: v1.0
-"""
-        except Exception as e:
-            response = f"❌ Error in Dharma Fork test: {e}"
-
+    elif mode == "Technical":
         similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
         response = (
             f"🔧 Technical Debug Info:\n"
@@ -183,43 +155,3 @@ elif mode == "Dharma Fork Test":
         })
 
     return response
-
-
-# Streamlit UI
-if streamlit_available:
-    st.title("🪔 DharmaAI – Minimum Viable Conscience")
-    st.subheader("Ask a question to GitaBot")
-
-    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical", "Dharma Fork Test"])
-    user_input = st.text_input("Your ethical question or dilemma:", value="")
-
-    # Load verse matrix
-    matrix_paths = [
-        "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
-        "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
-        "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"
-    ]
-    df_matrix = None
-    for path in matrix_paths:
-        if os.path.exists(path):
-            try:
-                df_matrix = pd.read_csv(path, encoding='utf-8')
-            except UnicodeDecodeError:
-                df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
-            break
-
-    if st.button("🔍 Submit"):
-        try:
-            response = generate_gita_response(mode, df_matrix=df_matrix, user_input=user_input)
-            st.markdown("""
-            <div style='border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; background-color: #f9f9f9;'>
-            """, unsafe_allow_html=True)
-            st.markdown(response)
-            st.markdown("</div>", unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"⚠️ Unexpected error: {e}")
-
-    if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
-        with st.expander("🕰️ View Past Interactions"):
-            st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
-
