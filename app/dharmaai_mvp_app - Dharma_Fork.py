@@ -2,6 +2,7 @@ import sys
 import random
 import os
 import re
+from engine.decision_engine import resolve_dharma_fork_from_yaml
 
 try:
     import openai
@@ -94,6 +95,32 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
 
+
+# PATCH: Add Dharma Fork Test Mode to dharmaai_mvp_app.py
+
+from engine.decision_engine import resolve_dharma_fork_from_yaml
+
+# Add to mode selection in Streamlit sidebar:
+# mode = st.sidebar.radio("Select Mode", [..., "Dharma Fork Test"])
+
+elif mode == "Dharma Fork Test":
+    try:
+        fork_response = resolve_dharma_fork_from_yaml(user_input, "antitrust_conscience_trial")
+        response = (
+            f"🧘 Krishna speaks (via Dharma Fork):\n\n"
+            f"**{fork_response['ethical_path']}**\n\n"
+            f"📜 Dharma: {fork_response['dharma']}\n"
+            f"🌀 Karma: {fork_response['karma']}\n"
+            f"📖 Scroll: {fork_response['scroll_ref']}\n"
+            f"🔗 Verse: Gita {fork_response['verse_ref']}\n"
+            f"🪞 Mirror Protocol: v1.0"
+        )
+    except Exception as e:
+        response = f"❌ Error in Dharma Fork test: {e}"
+
+# Place this block near other mode handlers inside your generate_gita_response function or main logic.
+
+
     elif mode == "Arjuna":
         response = (
             f"**😟 Arjuna's Doubt:**\n\n"
@@ -118,6 +145,23 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         response = "> You are not here to receive the answer.\n> You are here to see your reflection.\n> Ask again, and you may discover your dharma."
 
     elif mode == "Technical":
+    elif mode == "Dharma Fork Test":
+        try:
+            fork_response = resolve_dharma_fork_from_yaml(user_input, "antitrust_conscience_trial")
+            response = f"""
+🧘 Krishna speaks (via Dharma Fork):
+
+**{fork_response['ethical_path']}**
+
+📜 Dharma: {fork_response['dharma']}
+🌀 Karma: {fork_response['karma']}
+📖 Scroll: {fork_response['scroll_ref']}
+🔗 Verse: Gita {fork_response['verse_ref']}
+🪞 Mirror Protocol: v1.0
+"""
+        except Exception as e:
+            response = f"❌ Error in Dharma Fork test: {e}"
+
         similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
         response = (
             f"🔧 Technical Debug Info:\n"
@@ -150,7 +194,7 @@ if streamlit_available:
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
 
-    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
+    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical", "Dharma Fork Test"])
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
     # Load verse matrix
@@ -182,3 +226,4 @@ if streamlit_available:
     if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
         with st.expander("🕰️ View Past Interactions"):
             st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
+
