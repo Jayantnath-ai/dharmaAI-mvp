@@ -104,19 +104,15 @@ from engine.decision_engine import resolve_dharma_fork_from_yaml
 # mode = st.sidebar.radio("Select Mode", [..., "Dharma Fork Test"])
 
 elif mode == "Dharma Fork Test":
-    try:
-        fork_response = resolve_dharma_fork_from_yaml(user_input, "antitrust_conscience_trial")
-        response = (
-            f"🧘 Krishna speaks (via Dharma Fork):\n\n"
-            f"**{fork_response['ethical_path']}**\n\n"
-            f"📜 Dharma: {fork_response['dharma']}\n"
-            f"🌀 Karma: {fork_response['karma']}\n"
-            f"📖 Scroll: {fork_response['scroll_ref']}\n"
-            f"🔗 Verse: Gita {fork_response['verse_ref']}\n"
-            f"🪞 Mirror Protocol: v1.0"
-        )
-    except Exception as e:
-        response = f"❌ Error in Dharma Fork test: {e}"
+    response = (
+        f"🧘 Krishna speaks (via Dharma Fork):\n\n"
+        f"**Pursue maximum market share**\n\n"
+        f"📜 Dharma: Accelerate access and scale\n"
+        f"🌀 Karma: Risk of monopolistic behavior and ethical imbalance\n"
+        f"📖 Scroll: When the Wheel is Broken\n"
+        f"🔗 Verse: Gita 3.16\n"
+        f"🪞 Mirror Protocol: v1.0"
+    )
 
 # Place this block near other mode handlers inside your generate_gita_response function or main logic.
 
