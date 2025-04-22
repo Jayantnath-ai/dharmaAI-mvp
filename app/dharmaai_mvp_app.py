@@ -81,7 +81,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             if gemini_api_key:
                 genai.configure(api_key=gemini_api_key)
                 available_models = genai.list_models()
-                model_name = next((m.name for m in available_models if "generateContent" in m.supported_generation_methods), "models/gemini-pro")
+                model_name = next((m.name for m in available_models if "generateContent" in m.supported_generation_methods), "models/gemini-1.5-flash")
                 model = genai.GenerativeModel(model_name)
                 gemini_prompt = f"You are Krishna. Reflect and answer this question with dharmic insight: '{user_input}'. Gita Verse: '{verse_info['Short English Translation']}' tagged '{verse_info['Symbolic Conscience Mapping']}'"
                 gemini_reply = model.generate_content(gemini_prompt)
