@@ -48,6 +48,9 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     estimated_cost = round((total_tokens / 1000) * 0.002, 6)
 
     if streamlit_available:
+        st.set_page_config(page_title="DharmaAI MVP", layout="wide")
+        st.markdown("✅ DharmaAI UI Loaded")
+
         if st.session_state.get("app_version") != "v1.0.0":
             st.session_state.clear()
             st.session_state["app_version"] = "v1.0.0"
@@ -79,11 +82,19 @@ def generate_gita_response(mode, df_matrix, user_input=None):
                     temperature=0.7
                 )
                 reply = completion.choices[0].message.content.strip()
-                response = f"**🤖 Krishna-GPT says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
+                response = f"**🤖 Krishna-GPT says:**
+
+_Reflecting on your question:_ **{user_input}**
+
+> {reply}"
             except Exception as e:
                 response = f"❌ Error fetching response from Krishna-GPT: {str(e)}"
         else:
-            response = f"**🤖 Krishna-GPT says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response here based on dharma logic]'}"
+            response = f"**🤖 Krishna-GPT says:**
+
+_Reflecting on your question:_ **{user_input}**
+
+> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response here based on dharma logic]'}"
 
     elif mode == "Krishna-Gemini":
         if gemini_available:
@@ -97,9 +108,15 @@ def generate_gita_response(mode, df_matrix, user_input=None):
                     model = genai.GenerativeModel(model_name)
                     gemini_prompt = f"You are Krishna. Reflect and answer this question with dharmic insight: '{user_input}'. Gita Verse: '{verse_info['Short English Translation']}' tagged '{verse_info['Symbolic Conscience Mapping']}'"
                     gemini_reply = model.generate_content(gemini_prompt)
-                    response = f"**🌟 Krishna-Gemini reflects:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {gemini_reply.text.strip()}"
+                    response = f"**🌟 Krishna-Gemini reflects:**
+
+_Reflecting on your question:_ **{user_input}**
+
+> {gemini_reply.text.strip()}"
                 else:
-                    response = f"⚠️ Gemini API key not set.\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated Gemini response]'}"
+                    response = f"⚠️ Gemini API key not set.
+
+> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated Gemini response]'}"
             except Exception as e:
                 response = f"❌ Error fetching response from Krishna-Gemini: {str(e)}"
         else:
