@@ -47,8 +47,13 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     total_tokens = prompt_tokens + response_tokens
     estimated_cost = round((total_tokens / 1000) * 0.002, 6)
 
-    if streamlit_available and "Usage Journal" not in st.session_state:
-        st.session_state["Usage Journal"] = []
+    if streamlit_available:
+        if st.session_state.get("app_version") != "v1.0.0":
+            st.session_state.clear()
+            st.session_state["app_version"] = "v1.0.0"
+
+        if "Usage Journal" not in st.session_state:
+            st.session_state["Usage Journal"] = []
 
     response = ""
     verse_info = None

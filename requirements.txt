@@ -1,5 +1,6 @@
 streamlit
 pandas
+pyarrow
 pyyaml
 openai>=1.1.0
 requests
