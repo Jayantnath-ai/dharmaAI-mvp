@@ -53,7 +53,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         df_matrix['similarity'] = df_matrix['embedding'].apply(lambda emb: cosine_similarity(user_embedding, emb))
         verse_info = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
 
-    if mode == "Krishna-GPT":
+    if mode == "Krishna-Explains":
         if openai_available and os.getenv("OPENAI_API_KEY"):
             try:
                 system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance. Verse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Mapping']}'"
@@ -68,11 +68,11 @@ def generate_gita_response(mode, df_matrix, user_input=None):
                     temperature=0.7
                 )
                 reply = completion.choices[0].message.content.strip()
-                response = f"**🤖 Krishna-GPT says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
+                response = f"**🤖 Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
             except Exception as e:
-                response = f"❌ Error fetching response from Krishna-GPT: {str(e)}"
+                response = f"❌ Error fetching response from Krishna-Explains: {str(e)}"
         else:
-            response = f"**🤖 Krishna-GPT says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response here based on dharma logic]'}"
+            response = f"**🤖 Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response here based on dharma logic]'}"
 
     elif mode == "Krishna-Gemini":
         try:
@@ -150,7 +150,7 @@ if streamlit_available:
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
 
-    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-GPT", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
+    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-Explains", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
     # Load verse matrix
