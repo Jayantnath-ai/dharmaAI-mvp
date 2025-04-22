@@ -68,7 +68,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
                     temperature=0.7
                 )
                 reply = completion.choices[0].message.content.strip()
-                response = f"**🤖 Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
+                response = f"**🤖 Krishna-Explains :**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
             except Exception as e:
                 response = f"❌ Error fetching response from Krishna-Explains: {str(e)}"
         else:
