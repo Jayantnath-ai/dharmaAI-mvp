@@ -144,13 +144,14 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     return response
 
-
-# Streamlit UI
+# Streamlit UI — 🔥 UPDATED to Hide Krishna-Gemini, Vyasa, Mirror, Technical
 if streamlit_available:
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
 
-    mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-Explains", "Krishna-Gemini", "Arjuna", "Vyasa", "Mirror", "Technical"])
+    available_modes = ["Krishna", "Krishna-Explains", "Arjuna"]  # 👈 Only show these now
+    mode = st.sidebar.radio("Select Mode", available_modes)
+
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
     # Load verse matrix
