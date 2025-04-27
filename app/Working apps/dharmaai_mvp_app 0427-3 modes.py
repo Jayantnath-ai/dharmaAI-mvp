@@ -74,19 +74,60 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         else:
             response = f"**🤖 Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response here based on dharma logic]'}"
 
+    elif mode == "Krishna-Gemini":
+        try:
+            import google.generativeai as genai
+            gemini_api_key = os.getenv("GEMINI_API_KEY")
+            if gemini_api_key:
+                genai.configure(api_key=gemini_api_key)
+                available_models = genai.list_models()
+                model_name = next((m.name for m in available_models if "generateContent" in m.supported_generation_methods), "models/gemini-2.0-flash")
+                model = genai.GenerativeModel(model_name)
+                gemini_prompt = f"You are Krishna. Reflect and answer this question with dharmic insight: '{user_input}'. Gita Verse: '{verse_info['Short English Translation']}' tagged '{verse_info['Symbolic Conscience Mapping']}'"
+                gemini_reply = model.generate_content(gemini_prompt)
+                response = f"**🌟 Krishna-Gemini reflects:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {gemini_reply.text.strip()}"
+            else:
+                response = f"⚠️ Gemini API key not set.\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated Gemini response]'}"
+        except Exception as e:
+            response = f"❌ Error fetching response from Krishna-Gemini: {str(e)}"
+
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
 
-    # 🌀 New Dynamic Arjuna Mode
     elif mode == "Arjuna":
-        reflections = generate_arjuna_reflections(user_input)
         response = (
-            f"**😟 Arjuna's Reflections:**\n\n"
-            f"_Reflecting on your question:_ **'{user_input}'**\n\n"
-            f"Here are three doubts arising in my mind:\n\n"
-            f"1. {reflections[0]}\n"
-            f"2. {reflections[1]}\n"
-            f"3. {reflections[2]}"
+            f"**😟 Arjuna's Doubt:**\n\n"
+            f"> _What should I do about_ **'{user_input}'**?\n\n"
+            f"Here are three reflections Arjuna would face:\n"
+            f"1. Am I acting from fear or purpose?\n"
+            f"2. What attachment makes this choice difficult?\n"
+            f"3. If I were not afraid, what would duty ask of me?"
+        )
+
+    elif mode == "Vyasa":
+        similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
+        response = (
+            f"**📖 Vyasa Narrates:**\n\n"
+            f"Long ago, a seeker once asked: _'{user_input}'_.\n\n"
+            f"To this, Krishna replied in verse {verse_info['Verse ID'] if verse_info else '[unknown]'}\n"
+            f"(Symbolic Tag: {verse_info['Symbolic Conscience Mapping'] if verse_info else '[N/A]'}, Similarity Score: {similarity_score}):\n"
+            f"> _{verse_info['Short English Translation'] if verse_info else '[Gita wisdom unavailable]'}_"
+        )
+
+    elif mode == "Mirror":
+        response = "> You are not here to receive the answer.\n> You are here to see your reflection.\n> Ask again, and you may discover your dharma."
+
+    elif mode == "Technical":
+        similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
+        response = (
+            f"🔧 Technical Debug Info:\n"
+            f"- Question: {user_input}\n"
+            f"- Role: {user_role}\n"
+            f"- Matched Verse ID: {verse_info['Verse ID'] if verse_info else 'N/A'}\n"
+            f"- Symbolic Tag: {verse_info['Symbolic Conscience Mapping'] if verse_info else 'N/A'}\n"
+            f"- Cosine Score: {similarity_score}\n"
+            f"- Tokens Used: {total_tokens} (Est. ${estimated_cost})\n"
+            f"- Model: {st.session_state.get('OPENAI_MODEL', 'gpt-3.5-turbo')}"
         )
 
     if streamlit_available:
@@ -103,34 +144,12 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     return response
 
-# 🧠 Dynamic Arjuna Reflection Helper
-def generate_arjuna_reflections(user_input):
-    import random
-
-    themes = [
-        "fear", "attachment", "purpose", "duty", "detachment", "identity", "ego", "karma", "faith"
-    ]
-    base_reflections = {
-        "fear": "Am I acting from fear or from faith?",
-        "attachment": "What attachment is clouding my clarity?",
-        "purpose": "Is my choice aligned with my soul's deeper purpose?",
-        "duty": "Is this aligned with my dharma, not just my desires?",
-        "detachment": "Can I act without attachment to results?",
-        "identity": "Am I confusing my true self with my worldly role?",
-        "ego": "Is my pride making this decision harder?",
-        "karma": "What karmic seeds will I plant by this action?",
-        "faith": "Am I doubting because I have lost faith in my path?"
-    }
-    selected_themes = random.sample(themes, 3)
-    reflections = [base_reflections[theme] for theme in selected_themes]
-    return reflections
-
-# Streamlit UI — 🔥 Updated to Hide Gemini, Vyasa, Mirror, Technical
+# Streamlit UI — 🔥 UPDATED to Hide Krishna-Gemini, Vyasa, Mirror, Technical
 if streamlit_available:
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
 
-    available_modes = ["Krishna", "Krishna-Explains", "Arjuna"]  # Only showing Krishna, Krishna-Explains, Arjuna
+    available_modes = ["Krishna", "Krishna-Explains", "Arjuna"]  # 👈 Only show these now
     mode = st.sidebar.radio("Select Mode", available_modes)
 
     user_input = st.text_input("Your ethical question or dilemma:", value="")
