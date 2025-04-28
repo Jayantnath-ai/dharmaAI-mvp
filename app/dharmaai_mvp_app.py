@@ -2,6 +2,8 @@ import sys
 import random
 import os
 import re
+import json
+from datetime import datetime
 
 try:
     import openai
@@ -91,6 +93,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             f"</div>"
         )
 
+    # Log usage
     if streamlit_available:
         st.session_state["Usage Journal"].append({
             "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
@@ -100,8 +103,22 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             "response": response,
             "tokens": total_tokens,
             "cost_usd": estimated_cost,
-            "model": st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo")
+            "model": st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo"),
+            "timestamp": datetime.now().isoformat()
         })
+
+        # Save Usage Journal persistently
+        if not os.path.exists("saved_reflections"):
+            os.makedirs("saved_reflections")
+
+        timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
+        session_filename = f"saved_reflections/session_{timestamp}.json"
+
+        try:
+            with open(session_filename, "w", encoding="utf-8") as f:
+                json.dump(st.session_state["Usage Journal"], f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"Failed to save session: {e}")
 
     return response
 
