@@ -107,17 +107,23 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             "timestamp": datetime.now().isoformat()
         })
 
-        # Save Usage Journal persistently
-        if not os.path.exists("saved_reflections"):
-            os.makedirs("saved_reflections")
+        # Save Usage Journal persistently to FIXED path
+        SAVE_FOLDER = r"C:\Users\jayan\DATA\Jayant\Professional\Ideas\GitHub\dharmaAI-mvp\saved_reflections"
+
+        if not os.path.exists(SAVE_FOLDER):
+            os.makedirs(SAVE_FOLDER)
 
         timestamp = datetime.now().strftime("%Y-%m-%d-%H-%M")
-        session_filename = f"saved_reflections/session_{timestamp}.json"
+        session_filename = os.path.join(SAVE_FOLDER, f"session_{timestamp}.json")
 
         try:
             with open(session_filename, "w", encoding="utf-8") as f:
                 json.dump(st.session_state["Usage Journal"], f, ensure_ascii=False, indent=2)
+            if streamlit_available:
+                st.success(f"✅ Reflection saved locally at: {session_filename}")
         except Exception as e:
+            if streamlit_available:
+                st.error(f"❌ Failed to save reflection: {e}")
             print(f"Failed to save session: {e}")
 
     return response
