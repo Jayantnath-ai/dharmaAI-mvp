@@ -108,7 +108,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             f"</div>"
         )
 
-    # Save after each interaction
+    # Save quietly after each interaction
     if streamlit_available:
         st.session_state["Usage Journal"].append({
             "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
@@ -133,16 +133,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         try:
             with open(session_filename, "w", encoding="utf-8") as f:
                 json.dump(st.session_state["Usage Journal"], f, ensure_ascii=False, indent=2)
-            
-            # Show hyperlink at bottom
-            relative_path = os.path.relpath(session_filename, start=os.getcwd()).replace("\\", "/")
-            st.markdown(
-                f"<div style='text-align:center; margin-top:3rem;'>"
-                f"✅ Reflection saved locally: <a href='file:///{session_filename.replace(os.sep, '/')}' target='_blank'>{relative_path}</a>"
-                f"</div>",
-                unsafe_allow_html=True
-            )
-
         except Exception as e:
             if streamlit_available:
                 st.error(f"❌ Failed to save reflection: {e}")
@@ -150,7 +140,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     return response
 
-# Helper for Arjuna Reflections
 def generate_arjuna_reflections(user_input, df_matrix):
     import numpy as np
     import random
@@ -188,7 +177,6 @@ def generate_arjuna_reflections(user_input, df_matrix):
 
     return reflections_templates, matched_verse_text
 
-# Helper for Dharma Mirror Reflections
 def generate_dharma_mirror_reflections(user_input, df_matrix):
     import numpy as np
     import random
@@ -245,7 +233,6 @@ def generate_dharma_mirror_reflections(user_input, df_matrix):
 
     return reflections_templates, matched_verse_text
 
-# Streamlit UI
 if streamlit_available:
     st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
