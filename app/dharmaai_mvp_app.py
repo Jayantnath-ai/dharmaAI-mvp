@@ -73,7 +73,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             except Exception as e:
                 response = f"❌ Error fetching response from Krishna-Explains: {str(e)}"
         else:
-            response = f"**🤖 Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response here based on dharma logic]'}"
+            response = f"**🤖 Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response based on dharma logic]'}"
 
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
@@ -142,7 +142,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     return response
 
-# Helper for Arjuna Reflections
 def generate_arjuna_reflections(user_input, df_matrix):
     import numpy as np
     import random
@@ -180,10 +179,10 @@ def generate_arjuna_reflections(user_input, df_matrix):
 
     return reflections_templates, matched_verse_text
 
-# Helper for Dharma Mirror
 def generate_dharma_mirror_reflections(user_input, df_matrix):
     import numpy as np
     import random
+    import re
 
     def get_embedding(text):
         np.random.seed(abs(hash(text)) % (2**32))
@@ -208,6 +207,24 @@ def generate_dharma_mirror_reflections(user_input, df_matrix):
     best_match = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
 
     symbolic_tag = best_match['Symbolic Conscience Mapping'] if 'Symbolic Conscience Mapping' in best_match else "Unknown Dharma Theme"
+    symbolic_tag = re.sub(r'Field Mode', '', symbolic_tag).strip()
+
+    translation_map = {
+        "Atma-Sarvatra": "Soul Everywhere",
+        "Karma-Yoga": "Path of Selfless Action",
+        "Jnana-Yoga": "Path of Knowledge",
+        "Bhakti-Yoga": "Path of Devotion",
+        "Sankhya": "Knowledge of Ultimate Reality",
+        "Sattva": "Purity and Balance",
+        "Tamas": "Inertia and Darkness",
+        "Rajas": "Passion and Activity",
+        "Dharma-Sankata": "Moral Dilemma",
+        "Anasakti": "Detachment",
+    }
+    translation = translation_map.get(symbolic_tag, None)
+    if translation:
+        symbolic_tag = f"{symbolic_tag} ({translation})"
+
     matched_verse_text = best_match['Short English Translation'] if 'Short English Translation' in best_match else "[Verse unavailable]"
 
     reflections_templates = [
