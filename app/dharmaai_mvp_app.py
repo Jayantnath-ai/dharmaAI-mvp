@@ -20,7 +20,6 @@ try:
 except ImportError:
     pd = None
 
-# Define generate_gita_response inline
 def generate_gita_response(mode, df_matrix, user_input=None):
     if not user_input or len(user_input.strip()) < 5:
         return "🛑 Please ask a more complete or meaningful question."
@@ -79,16 +78,17 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     elif mode == "Arjuna":
         reflections, matched_verse = generate_arjuna_reflections(user_input, df_matrix)
+        reflection_text = "\n".join([f"{idx+1}. {line}" for idx, line in enumerate(reflections)])
         response = (
-            f"**😟 Arjuna's Reflections:**\n\n"
-            f"_Reflecting on your question:_ **'{user_input}'**\n\n"
-            f"Here are three doubts arising in my mind, inspired by the dharma of your situation:\n\n"
-            f"1. {reflections[0]}\n"
-            f"2. {reflections[1]}\n"
-            f"3. {reflections[2]}\n\n"
-            f"---\n"
-            f"**📜 Matched Gita Verse:**\n\n"
-            f"_{matched_verse}_"
+            f"## 😟 Arjuna's Reflections\n\n"
+            f"_Reflecting on your question:_ **{user_input}**\n\n"
+            f"Here are three doubts arising in my mind:\n\n"
+            f"{reflection_text}\n\n"
+            f"---\n\n"
+            f"### 📜 Matched Gita Verse\n\n"
+            f"<div style='background-color: #f0f0f0; padding: 1rem; border-radius: 10px;'>"
+            f"<em>{matched_verse}</em>"
+            f"</div>"
         )
 
     if streamlit_available:
@@ -105,7 +105,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     return response
 
-# 🧠 Dynamic Arjuna Reflection Helper — Now returns both reflections + matched verse
 def generate_arjuna_reflections(user_input, df_matrix):
     import numpy as np
     import random
@@ -143,8 +142,8 @@ def generate_arjuna_reflections(user_input, df_matrix):
 
     return reflections_templates, matched_verse_text
 
-# Streamlit UI — only Krishna, Krishna-Explains, Arjuna
 if streamlit_available:
+    st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
 
@@ -170,10 +169,11 @@ if streamlit_available:
     if st.button("🔍 Submit"):
         try:
             response = generate_gita_response(mode, df_matrix=df_matrix, user_input=user_input)
-            st.markdown("""
-            <div style='border: 1px solid #ddd; padding: 1rem; border-radius: 0.5rem; background-color: #f9f9f9;'>
-            """, unsafe_allow_html=True)
-            st.markdown(response)
+            st.markdown(
+                "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
+                unsafe_allow_html=True
+            )
+            st.markdown(response, unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
         except Exception as e:
             st.error(f"⚠️ Unexpected error: {e}")

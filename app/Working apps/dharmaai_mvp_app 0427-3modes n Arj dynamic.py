@@ -77,16 +77,18 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
 
-    # 🌀 New Dynamic Arjuna Mode
     elif mode == "Arjuna":
-        reflections = generate_arjuna_reflections(user_input)
+        reflections, matched_verse = generate_arjuna_reflections(user_input, df_matrix)
         response = (
             f"**😟 Arjuna's Reflections:**\n\n"
             f"_Reflecting on your question:_ **'{user_input}'**\n\n"
-            f"Here are three doubts arising in my mind:\n\n"
+            f"Here are three doubts arising in my mind, inspired by the dharma of your situation:\n\n"
             f"1. {reflections[0]}\n"
             f"2. {reflections[1]}\n"
-            f"3. {reflections[2]}"
+            f"3. {reflections[2]}\n\n"
+            f"---\n"
+            f"**📜 Matched Gita Verse:**\n\n"
+            f"_{matched_verse}_"
         )
 
     if streamlit_available:
@@ -103,39 +105,54 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     return response
 
-# 🧠 Dynamic Arjuna Reflection Helper
-def generate_arjuna_reflections(user_input):
+# 🧠 Dynamic Arjuna Reflection Helper — Now returns both reflections + matched verse
+def generate_arjuna_reflections(user_input, df_matrix):
+    import numpy as np
     import random
 
-    themes = [
-        "fear", "attachment", "purpose", "duty", "detachment", "identity", "ego", "karma", "faith"
-    ]
-    base_reflections = {
-        "fear": "Am I acting from fear or from faith?",
-        "attachment": "What attachment is clouding my clarity?",
-        "purpose": "Is my choice aligned with my soul's deeper purpose?",
-        "duty": "Is this aligned with my dharma, not just my desires?",
-        "detachment": "Can I act without attachment to results?",
-        "identity": "Am I confusing my true self with my worldly role?",
-        "ego": "Is my pride making this decision harder?",
-        "karma": "What karmic seeds will I plant by this action?",
-        "faith": "Am I doubting because I have lost faith in my path?"
-    }
-    selected_themes = random.sample(themes, 3)
-    reflections = [base_reflections[theme] for theme in selected_themes]
-    return reflections
+    def get_embedding(text):
+        np.random.seed(abs(hash(text)) % (2**32))
+        return np.random.rand(1536)
 
-# Streamlit UI — 🔥 Updated to Hide Gemini, Vyasa, Mirror, Technical
+    def cosine_similarity(vec1, vec2):
+        return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+
+    if df_matrix is None or df_matrix.empty:
+        default_reflections = [
+            "Am I acting from fear or from faith?",
+            "Is this choice aligned with my dharma or my desire?",
+            "What attachment clouds my clarity?"
+        ]
+        return default_reflections, "[No matched verse]"
+
+    if 'embedding' not in df_matrix.columns:
+        df_matrix['embedding'] = df_matrix['Short English Translation'].apply(lambda x: get_embedding(str(x)))
+
+    user_embedding = get_embedding(user_input)
+    df_matrix['similarity'] = df_matrix['embedding'].apply(lambda emb: cosine_similarity(user_embedding, emb))
+    best_match = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
+
+    symbolic_tag = best_match['Symbolic Conscience Mapping'] if 'Symbolic Conscience Mapping' in best_match else "Unknown Dharma Theme"
+    matched_verse_text = best_match['Short English Translation'] if 'Short English Translation' in best_match else "[Verse unavailable]"
+
+    reflections_templates = [
+        f"How does {symbolic_tag} guide my next action?",
+        f"Am I being tested in the realm of {symbolic_tag}?",
+        f"What does {symbolic_tag} demand from me, not my fear?"
+    ]
+
+    return reflections_templates, matched_verse_text
+
+# Streamlit UI — only Krishna, Krishna-Explains, Arjuna
 if streamlit_available:
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
 
-    available_modes = ["Krishna", "Krishna-Explains", "Arjuna"]  # Only showing Krishna, Krishna-Explains, Arjuna
+    available_modes = ["Krishna", "Krishna-Explains", "Arjuna"]
     mode = st.sidebar.radio("Select Mode", available_modes)
 
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
-    # Load verse matrix
     matrix_paths = [
         "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
         "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
