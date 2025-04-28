@@ -120,10 +120,10 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             with open(session_filename, "w", encoding="utf-8") as f:
                 json.dump(st.session_state["Usage Journal"], f, ensure_ascii=False, indent=2)
             if streamlit_available:
-                st.success(f"✅ Reflection saved locally at: {session_filename}")
+                st.success(f"✅")
         except Exception as e:
             if streamlit_available:
-                st.error(f"❌ Failed to save reflection: {e}")
+                st.error(f"?")
             print(f"Failed to save session: {e}")
 
     return response
