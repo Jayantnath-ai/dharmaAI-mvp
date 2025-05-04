@@ -346,18 +346,18 @@ if streamlit_available:
 
     if st.button("🔍 Submit"):
         try:
-        	if mode == "Karmic Entanglement Simulator":
-            		if not user_input.strip():
-               			st.error("Please enter or select an ethical scenario first.")
-            		else:
-               			karmic_reflection = simulate_karmic_entanglement(user_input)
-                		st.markdown(
-                    		"<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
-                    		unsafe_allow_html=True
-                		)
-                		st.markdown(karmic_reflection, unsafe_allow_html=True)
-                		st.markdown("</div>", unsafe_allow_html=True)
-            		return  # prevent further processing for this mode
+            if mode == "Karmic Entanglement Simulator":
+                    if not user_input.strip():
+                           st.error("Please enter or select an ethical scenario first.")
+                    else:
+                           karmic_reflection = simulate_karmic_entanglement(user_input)
+                        st.markdown(
+                            "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
+                            unsafe_allow_html=True
+                        )
+                        st.markdown(karmic_reflection, unsafe_allow_html=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    return  # prevent further processing for this mode
 
             response = generate_gita_response(mode, df_matrix=df_matrix, user_input=user_input)
             st.markdown(
