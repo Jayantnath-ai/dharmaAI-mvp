@@ -345,8 +345,8 @@ if streamlit_available:
             break
 
     if st.button("🔍 Submit"):
-    	pass  # Placeholder to satisfy if-block
-    	def handle_submission():
+        pass  # Placeholder to satisfy if-block
+        def handle_submission():
             try:
                 if mode == "Karmic Entanglement Simulator":
                         if not user_input.strip():
@@ -375,10 +375,10 @@ if streamlit_available:
             with st.expander("🕰️ View Past Interactions"):
                 st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
     
-    	try:
-        	handle_submission()
-   	 except Exception as e:
-        	st.error(f"⚠️ Unexpected error: {e}")
+        try:
+            handle_submission()
+        except Exception as e:
+            st.error(f"⚠️ Unexpected error: {e}")
     # 🔵 FINAL STREAMLIT UI BLOCK (Merged)
 import streamlit as st
 import random
