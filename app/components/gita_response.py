@@ -85,7 +85,38 @@ if mode == "Krishna":
             f"Which karmic fork shall you choose?"
         )
 
-    # Save locally
+        elif mode == "Vyasa":
+        similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
+        response = (
+            f"**📖 Vyasa Narrates:**\n\n"
+            f"Long ago, a seeker once asked: _'{user_input}'_.\n\n"
+            f"To this, Krishna replied in verse {verse_info['Verse ID'] if verse_info else '[unknown]'}\n"
+            f"(Symbolic Tag: {verse_info['Symbolic Conscience Mapping'] if verse_info else '[N/A]'}, Similarity Score: {similarity_score}):\n"
+            f"> _{verse_info['Short English Translation'] if verse_info else '[Gita wisdom unavailable]'}_"
+        )
+
+    elif mode == "Technical":
+        similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
+        response = (
+            f"🔧 Technical Debug Info:\n"
+            f"- Question: {user_input}\n"
+            f"- Mode: {mode}\n"
+            f"- Matched Verse ID: {verse_info['Verse ID'] if verse_info else 'N/A'}\n"
+            f"- Symbolic Tag: {verse_info['Symbolic Conscience Mapping'] if verse_info else 'N/A'}\n"
+            f"- Cosine Score: {similarity_score}\n"
+            f"- Model: {st.session_state.get('OPENAI_MODEL', 'gpt-3.5-turbo')}"
+        )
+
+    elif mode == "Forked Fate Contemplation":
+        response = (
+            f"## 🧭 Forked Fate Contemplation\n\n"
+            f"_You asked:_ **{user_input}**\n\n"
+            f"Two futures are unfolding:\n"
+            f"1. One bound by karma, obligation, or fear.\n"
+            f"2. One born of dharma, courage, or sacrifice.\n\n"
+            f"Which fork holds your true self?"
+        )
+# Save locally
     st.session_state["Usage Journal"].append({
         "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
         "mode": mode,
