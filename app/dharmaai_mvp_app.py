@@ -230,6 +230,41 @@ def generate_dharma_mirror_reflections(user_input, df_matrix):
 
     return reflections_templates, matched_verse_text
 
+def simulate_karmic_entanglement(dilemma):
+    import random
+    karmic_paths = {
+        "Reveal Truth": {
+            "tags": ["Satya (Truth)", "Karma-Yoga (Selfless Action)", "Sattva (Purity)"],
+            "short_term": "Disruption, instability",
+            "long_term": "Greater ethical growth, trust",
+            "score": random.uniform(0.7, 1.0)
+        },
+        "Stay Silent": {
+            "tags": ["Maya (Illusion)", "Rajas (Activity)", "Tamas (Inertia)"],
+            "short_term": "Immediate stability",
+            "long_term": "Ethical weakening, distrust",
+            "score": random.uniform(-1.0, -0.5)
+        }
+    }
+
+    reflection = f"## 🌌 Karmic Entanglement Simulation\n"
+    reflection += f"**Dilemma:** {dilemma}\n\n"
+    reflection += "---\n\n"
+    for path_name, details in karmic_paths.items():
+        reflection += f"### 🔀 Path: {path_name}\n"
+        reflection += f"- **Symbolic Tags:** {', '.join(details['tags'])}\n"
+        reflection += f"- **Short-term Impact:** {details['short_term']}\n"
+        reflection += f"- **Long-term Impact:** {details['long_term']}\n"
+        reflection += f"- **Karmic Entanglement Score:** {'🌟 Positive' if details['score']>0 else '⚠️ Negative'} ({details['score']:.2f})\n"
+        reflection += "\n---\n\n"
+
+    reflection += "### 🪞 Reflective Questions:\n"
+    reflection += "- Which path aligns most with your inner sense of dharma?\n"
+    reflection += "- What symbolic tags resonate deeply with you?\n"
+    reflection += "- Which long-term karmic ripple can you bear responsibly?\n"
+    return reflection
+
+
 # 🔵 DAILY ANALYZER
 def load_reflections(folder="saved_reflections"):
     today = datetime.now().strftime("%Y-%m-%d")
