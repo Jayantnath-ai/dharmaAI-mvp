@@ -345,35 +345,40 @@ if streamlit_available:
             break
 
     if st.button("🔍 Submit"):
-        try:
-            if mode == "Karmic Entanglement Simulator":
-                    if not user_input.strip():
-                        st.error("Please enter or select an ethical scenario first.")
-                    else:
-                        karmic_reflection = simulate_karmic_entanglement(user_input)
-                        st.markdown(
-                            "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
-                            unsafe_allow_html=True
-                        )
-                        st.markdown(karmic_reflection, unsafe_allow_html=True)
-                        st.markdown("</div>", unsafe_allow_html=True)
-                    return  # prevent further processing for this mode
-
-            response = generate_gita_response(mode, df_matrix=df_matrix, user_input=user_input)
-            st.markdown(
-                "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
-                unsafe_allow_html=True
-            )
-            st.markdown(response, unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"⚠️ Unexpected error: {e}")
-
-    if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
-        with st.expander("🕰️ View Past Interactions"):
-            st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
-
-# 🔵 FINAL STREAMLIT UI BLOCK (Merged)
+    def handle_submission():
+            try:
+                if mode == "Karmic Entanglement Simulator":
+                        if not user_input.strip():
+                            st.error("Please enter or select an ethical scenario first.")
+                        else:
+                            karmic_reflection = simulate_karmic_entanglement(user_input)
+                            st.markdown(
+                                "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
+                                unsafe_allow_html=True
+                            )
+                            st.markdown(karmic_reflection, unsafe_allow_html=True)
+                            st.markdown("</div>", unsafe_allow_html=True)
+                        return  # prevent further processing for this mode
+    
+                response = generate_gita_response(mode, df_matrix=df_matrix, user_input=user_input)
+                st.markdown(
+                    "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
+                    unsafe_allow_html=True
+                )
+                st.markdown(response, unsafe_allow_html=True)
+                st.markdown("</div>", unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"⚠️ Unexpected error: {e}")
+    
+        if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
+            with st.expander("🕰️ View Past Interactions"):
+                st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
+    
+    try:
+        handle_submission()
+    except Exception as e:
+        st.error(f"⚠️ Unexpected error: {e}")
+    # 🔵 FINAL STREAMLIT UI BLOCK (Merged)
 import streamlit as st
 import random
 import os
@@ -430,20 +435,21 @@ selected_fork = st.sidebar.selectbox("🪔 Dharma Forks", options=[""] + predefi
 user_input = st.text_input("Your ethical question or dilemma:", value=selected_fork or "")
 
 if st.button("🔍 Submit"):
-    try:
-        if mode == "Karmic Entanglement Simulator":
-            if not user_input.strip():
-                st.error("Please enter or select an ethical scenario first.")
+    def handle_submission():
+        try:
+            if mode == "Karmic Entanglement Simulator":
+                if not user_input.strip():
+                    st.error("Please enter or select an ethical scenario first.")
+                else:
+                    karmic_reflection = simulate_karmic_entanglement(user_input)
+                    st.markdown(
+                        "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
+                        unsafe_allow_html=True
+                    )
+                    st.markdown(karmic_reflection, unsafe_allow_html=True)
+                    st.markdown("</div>", unsafe_allow_html=True)
             else:
-                karmic_reflection = simulate_karmic_entanglement(user_input)
-                st.markdown(
-                    "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
-                    unsafe_allow_html=True
-                )
-                st.markdown(karmic_reflection, unsafe_allow_html=True)
-                st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            response = f"Simulated response for mode: {mode}\n\nYou asked: {user_input}"
-            st.markdown(response)
-    except Exception as e:
-        st.error(f"⚠️ Unexpected error: {e}")
+                response = f"Simulated response for mode: {mode}\n\nYou asked: {user_input}"
+                st.markdown(response)
+        except Exception as e:
+            st.error(f"⚠️ Unexpected error: {e}")
