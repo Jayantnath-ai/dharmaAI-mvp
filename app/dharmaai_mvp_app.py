@@ -345,8 +345,8 @@ if streamlit_available:
             break
 
     if st.button("🔍 Submit"):
-    pass  # Placeholder to satisfy if-block
-    def handle_submission():
+    	pass  # Placeholder to satisfy if-block
+    	def handle_submission():
             try:
                 if mode == "Karmic Entanglement Simulator":
                         if not user_input.strip():
