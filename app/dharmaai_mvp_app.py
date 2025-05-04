@@ -21,7 +21,7 @@ for path in matrix_paths:
         break
 
 # UI
-mode = st.sidebar.radio("Select Mode", ["Krishna", "Arjuna", "Dharma Mirror", "Karmic Entanglement Simulator"])
+mode = st.sidebar.radio("Select Mode", ["Krishna", "Krishna-Explains", "Arjuna", "Dharma Mirror", "Karmic Entanglement Simulator", "Vyasa", "Technical", "Forked Fate Contemplation"])
 
 if st.sidebar.button("📊 Analyze Today's Reflections"):
     summary = analyze_reflections(load_reflections())
