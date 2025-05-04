@@ -345,6 +345,7 @@ if streamlit_available:
             break
 
     if st.button("🔍 Submit"):
+    pass  # Placeholder to satisfy if-block
     def handle_submission():
             try:
                 if mode == "Karmic Entanglement Simulator":
@@ -435,6 +436,7 @@ selected_fork = st.sidebar.selectbox("🪔 Dharma Forks", options=[""] + predefi
 user_input = st.text_input("Your ethical question or dilemma:", value=selected_fork or "")
 
 if st.button("🔍 Submit"):
+    pass  # Placeholder to satisfy if-block
     def handle_submission():
         try:
             if mode == "Karmic Entanglement Simulator":
