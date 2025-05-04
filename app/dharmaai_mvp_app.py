@@ -23,7 +23,7 @@ def main():
         try:
     except ImportError:
     pd = None
-        # 🔵 MAIN GITA RESPONSE GENERATOR
+        #  MAIN GITA RESPONSE GENERATOR
     def generate_gita_response(mode, df_matrix, user_input=None):
     if not user_input or len(user_input.strip()) < 5:
     # Replaced invalid return with pass or continue
@@ -64,23 +64,23 @@ def main():
     temperature=0.7
     )
     reply = completion.choices[0].message.content.strip()
-    response = f"**🤖 Krishna-Explains :**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
+    response = f"** Krishna-Explains :**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
     except Exception as e:
-    response = f"❌ Error fetching response from Krishna-Explains: {str(e)}"
+    response = f" Error fetching response from Krishna-Explains: {str(e)}"
     else:
-    response = f"**🤖 Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response based on dharma logic]'}"
+    response = f"** Krishna-Explains says:**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response based on dharma logic]'}"
         elif mode == "Krishna":
-    response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
+    response = f"** Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
         elif mode == "Arjuna":
     reflections, matched_verse = generate_arjuna_reflections(user_input, df_matrix)
     reflection_text = "\n".join([f"{idx+1}. {line}" for idx, line in enumerate(reflections)])
     response = (
-    f"## 😟 Arjuna's Reflections\n\n"
+    f"##  Arjuna's Reflections\n\n"
     f"_Reflecting on your question:_ **{user_input}**\n\n"
     f"Here are three doubts arising in my mind:\n\n"
     f"{reflection_text}\n\n"
     f"---\n\n"
-    f"### 📜 Matched Gita Verse\n\n"
+    f"###  Matched Gita Verse\n\n"
     f"<div style='background-color: #f0f0f0; padding: 1rem; border-radius: 10px;'>"
     f"<em>{matched_verse}</em>"
     f"</div>"
@@ -89,12 +89,12 @@ def main():
     reflections, matched_verse = generate_dharma_mirror_reflections(user_input, df_matrix)
     reflection_text = "\n".join([f"{idx+1}. {line}" for idx, line in enumerate(reflections)])
     response = (
-    f"## 🪞 Dharma Mirror Reflections\n\n"
+    f"##  Dharma Mirror Reflections\n\n"
     f"_Contemplating your question:_ **{user_input}**\n\n"
     f"Here are sacred conscience reflections to guide you:\n\n"
     f"{reflection_text}\n\n"
     f"---\n\n"
-    f"### 📜 Matched Gita Verse\n\n"
+    f"###  Matched Gita Verse\n\n"
     f"<div style='background-color: #f0f0f0; padding: 1rem; border-radius: 10px;'>"
     f"<em>{matched_verse}</em>"
     f"</div>"
@@ -119,11 +119,11 @@ def main():
     json.dump(st.session_state["Usage Journal"], f, ensure_ascii=False, indent=2)
     except Exception as e:
     if streamlit_available:
-    st.error(f"❌ Failed to save reflection: {e}")
+    st.error(f" Failed to save reflection: {e}")
     print(f"Failed to save session: {e}")
         # Replaced invalid return with pass or continue
     pass
-        # 🔵 SUPPORT FUNCTIONS
+        #  SUPPORT FUNCTIONS
     def generate_arjuna_reflections(user_input, df_matrix):
         def get_embedding(text):
     np.random.seed(abs(hash(text)) % (2**32))
@@ -166,7 +166,7 @@ def main():
     default_reflections = [
     "What is the silent truth behind my dilemma?",
     "Which attachment clouds my view?",
-    "What would courage — not fear — choose here?"
+    "What would courage  not fear  choose here?"
     ]
     # Replaced invalid return with pass or continue
     pass
@@ -215,23 +215,23 @@ def main():
     "score": random.uniform(-1.0, -0.5)
     }
     }
-        reflection = f"## 🌌 Karmic Entanglement Simulation\n"
+        reflection = f"##  Karmic Entanglement Simulation\n"
     reflection += f"**Dilemma:** {dilemma}\n\n"
     reflection += "---\n\n"
     for path_name, details in karmic_paths.items():
-    reflection += f"### 🔀 Path: {path_name}\n"
+    reflection += f"###  Path: {path_name}\n"
     reflection += f"- **Symbolic Tags:** {', '.join(details['tags'])}\n"
     reflection += f"- **Short-term Impact:** {details['short_term']}\n"
     reflection += f"- **Long-term Impact:** {details['long_term']}\n"
-    reflection += f"- **Karmic Entanglement Score:** {'🌟 Positive' if details['score']>0 else '⚠️ Negative'} ({details['score']:.2f})\n"
+    reflection += f"- **Karmic Entanglement Score:** {' Positive' if details['score']>0 else ' Negative'} ({details['score']:.2f})\n"
     reflection += "\n---\n\n"
-        reflection += "### 🪞 Reflective Questions:\n"
+        reflection += "###  Reflective Questions:\n"
     reflection += "- Which path aligns most with your inner sense of dharma?\n"
     reflection += "- What symbolic tags resonate deeply with you?\n"
     reflection += "- Which long-term karmic ripple can you bear responsibly?\n"
     # Replaced invalid return with pass or continue
     pass
-            # 🔵 DAILY ANALYZER
+            #  DAILY ANALYZER
     def load_reflections(folder="saved_reflections"):
     today = datetime.now().strftime("%Y-%m-%d")
     reflections = []
@@ -266,21 +266,21 @@ def main():
     st.info("No reflections saved yet today.")
     # Replaced invalid return with pass or continue
     pass
-        st.header("📅 Daily Dharma Reflection Summary")
+        st.header(" Daily Dharma Reflection Summary")
     st.write(f"**Total Reflections Today:** {summary['total_questions']}")
-        st.subheader("🧠 Top Dharma Themes Reflected")
+        st.subheader(" Top Dharma Themes Reflected")
     st.write(summary['top_tags'])
-        st.subheader("📜 Top Gita Verses Matched")
+        st.subheader(" Top Gita Verses Matched")
     st.write(summary['top_verses'])
-        st.subheader("🕰️ Timeline of Reflections")
+        st.subheader(" Timeline of Reflections")
     st.line_chart(pd.Series([1]*len(summary['timeline']), index=summary['timeline']))
-        # 🔵 STREAMLIT UI
+        #  STREAMLIT UI
     if streamlit_available:
-    st.title("🪔 DharmaAI – Minimum Viable Conscience")
+    st.title(" DharmaAI  Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
         available_modes = ["Krishna", "Krishna-Explains", "Arjuna", "Dharma Mirror", "Karmic Entanglement Simulator"]
         mode = st.sidebar.radio("Select Mode", available_modes)
-        if st.sidebar.button("📊 Analyze Today's Reflections"):
+        if st.sidebar.button(" Analyze Today's Reflections"):
     reflections = load_reflections()
     summary = analyze_reflections(reflections)
     display_summary(summary)
@@ -298,7 +298,7 @@ def main():
     except UnicodeDecodeError:
     df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
     break
-            if st.button("🔍 Submit"):
+            if st.button(" Submit"):
         pass  # Placeholder to satisfy if-block
         def handle_submission():
         try:
@@ -323,15 +323,15 @@ def main():
     st.markdown(response, unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     except Exception as e:
-    st.error(f"⚠️ Unexpected error: {e}")
+    st.error(f" Unexpected error: {e}")
         if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
-    with st.expander("🕰️ View Past Interactions"):
+    with st.expander(" View Past Interactions"):
     st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
         try:
     handle_submission()
     except Exception as e:
-    st.error(f"⚠️ Unexpected error: {e}")
-    # 🔵 FINAL STREAMLIT UI BLOCK (Merged)
+    st.error(f" Unexpected error: {e}")
+    #  FINAL STREAMLIT UI BLOCK (Merged)
         def simulate_karmic_entanglement(dilemma):
     karmic_paths = {
     "Reveal Truth": {
@@ -347,23 +347,23 @@ def main():
     "score": random.uniform(-1.0, -0.5)
     }
     }
-        reflection = f"## 🌌 Karmic Entanglement Simulation\n"
+        reflection = f"##  Karmic Entanglement Simulation\n"
     reflection += f"**Dilemma:** {dilemma}\n\n"
     reflection += "---\n\n"
     for path_name, details in karmic_paths.items():
-    reflection += f"### 🔀 Path: {path_name}\n"
+    reflection += f"###  Path: {path_name}\n"
     reflection += f"- **Symbolic Tags:** {', '.join(details['tags'])}\n"
     reflection += f"- **Short-term Impact:** {details['short_term']}\n"
     reflection += f"- **Long-term Impact:** {details['long_term']}\n"
-    reflection += f"- **Karmic Entanglement Score:** {'🌟 Positive' if details['score']>0 else '⚠️ Negative'} ({details['score']:.2f})\n"
+    reflection += f"- **Karmic Entanglement Score:** {' Positive' if details['score']>0 else ' Negative'} ({details['score']:.2f})\n"
     reflection += "\n---\n\n"
-        reflection += "### 🪞 Reflective Questions:\n"
+        reflection += "###  Reflective Questions:\n"
     reflection += "- Which path aligns most with your inner sense of dharma?\n"
     reflection += "- What symbolic tags resonate deeply with you?\n"
     reflection += "- Which long-term karmic ripple can you bear responsibly?\n"
     # Replaced invalid return with pass or continue
     pass
-        st.title("🪔 DharmaAI – Minimum Viable Conscience")
+        st.title(" DharmaAI  Minimum Viable Conscience")
     st.subheader("Ask a question to GitaBot")
         available_modes = ["Krishna", "Krishna-Explains", "Arjuna", "Dharma Mirror", "Karmic Entanglement Simulator"]
     mode = st.sidebar.radio("Select Mode", available_modes)
@@ -373,9 +373,9 @@ def main():
     "Should I step away from a lucrative deal that feels morally wrong?",
     "Should I automate a task that will eliminate someone's job?"
     ]
-    selected_fork = st.sidebar.selectbox("🪔 Dharma Forks", options=[""] + predefined_forks)
+    selected_fork = st.sidebar.selectbox(" Dharma Forks", options=[""] + predefined_forks)
     user_input = st.text_input("Your ethical question or dilemma:", value=selected_fork or "")
-        if st.button("🔍 Submit"):
+        if st.button(" Submit"):
         pass  # Placeholder to satisfy if-block
         def handle_submission():
         try:
@@ -394,7 +394,7 @@ def main():
         response = f"Simulated response for mode: {mode}\n\nYou asked: {user_input}"
         st.markdown(response)
         except Exception as e:
-        st.error(f"⚠️ Unexpected error: {e}")
+        st.error(f" Unexpected error: {e}")
 
 if __name__ == '__main__':
     main()
