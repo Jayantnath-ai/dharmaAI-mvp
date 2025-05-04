@@ -1,24 +1,26 @@
 import streamlit as st
+import sys
+import random
+import os
+import re
+import json
+from datetime import datetime
+import openai
+import pandas as pd
+import numpy as np
+from openai import OpenAI
+
 
 def main():
-    import sys
-    import random
-    import os
-    import re
-    import json
-        from datetime import datetime
         try:
-    import openai
     openai_available = True
     except ImportError:
     openai_available = False
         try:
-    import streamlit as st
     streamlit_available = True
     except ImportError:
     streamlit_available = False
         try:
-    import pandas as pd
     except ImportError:
     pd = None
         # 🔵 MAIN GITA RESPONSE GENERATOR
@@ -26,7 +28,6 @@ def main():
     if not user_input or len(user_input.strip()) < 5:
     # Replaced invalid return with pass or continue
     pass
-        import numpy as np
         def get_embedding(text):
     np.random.seed(abs(hash(text)) % (2**32))
     # Replaced invalid return with pass or continue
@@ -53,7 +54,6 @@ def main():
     if openai_available and os.getenv("OPENAI_API_KEY"):
     try:
     system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance. Verse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Mapping']}'"
-    from openai import OpenAI
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     completion = client.chat.completions.create(
     model=st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo"),
@@ -125,8 +125,6 @@ def main():
     pass
         # 🔵 SUPPORT FUNCTIONS
     def generate_arjuna_reflections(user_input, df_matrix):
-    import numpy as np
-    import random
         def get_embedding(text):
     np.random.seed(abs(hash(text)) % (2**32))
     # Replaced invalid return with pass or continue
@@ -157,9 +155,6 @@ def main():
         # Replaced invalid return with pass or continue
     pass
         def generate_dharma_mirror_reflections(user_input, df_matrix):
-    import numpy as np
-    import random
-    import re
         def get_embedding(text):
     np.random.seed(abs(hash(text)) % (2**32))
     # Replaced invalid return with pass or continue
@@ -206,7 +201,6 @@ def main():
         # Replaced invalid return with pass or continue
     pass
         def simulate_karmic_entanglement(dilemma):
-    import random
     karmic_paths = {
     "Reveal Truth": {
     "tags": ["Satya (Truth)", "Karma-Yoga (Selfless Action)", "Sattva (Purity)"],
@@ -338,11 +332,6 @@ def main():
     except Exception as e:
     st.error(f"⚠️ Unexpected error: {e}")
     # 🔵 FINAL STREAMLIT UI BLOCK (Merged)
-    import streamlit as st
-    import random
-    import os
-    import json
-    from datetime import datetime
         def simulate_karmic_entanglement(dilemma):
     karmic_paths = {
     "Reveal Truth": {
