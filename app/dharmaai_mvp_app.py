@@ -348,9 +348,9 @@ if streamlit_available:
         try:
             if mode == "Karmic Entanglement Simulator":
                     if not user_input.strip():
-                           st.error("Please enter or select an ethical scenario first.")
+                        st.error("Please enter or select an ethical scenario first.")
                     else:
-                           karmic_reflection = simulate_karmic_entanglement(user_input)
+                        karmic_reflection = simulate_karmic_entanglement(user_input)
                         st.markdown(
                             "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
                             unsafe_allow_html=True
