@@ -1,0 +1,54 @@
+```yaml
+# DharmaAI Ethical Scroll Templates
+# Each scroll represents a principle from a distinct ethical tradition.
+# Fields:
+# - scroll_id: Unique identifier
+# - tradition: Ethical school or framework
+# - principle: Name of the principle
+# - description: Brief explanation
+# - symbolic_mapping: Symbolic tag for internal mapping
+# - decision_rule: Pseudocode to evaluate scenarios
+# - triggers_on: List of scenario contexts
+
+- scroll_id: DEONTOLOGY_001
+  tradition: "Deontology"
+  principle: "Respect for Persons"
+  description: |
+    Treat every individual as an end in themselves, never merely as a means.
+  symbolic_mapping: "Kārya-Niyama"
+  decision_rule: |
+    if action.treats_as_means:
+      score.deontology -= 1
+    else:
+      score.deontology += 1
+  triggers_on:
+    - "agent-choice"
+    - "third-party-impact"
+
+- scroll_id: UTILITARIANISM_001
+  tradition: "Utilitarianism"
+  principle: "Greatest Happiness Principle"
+  description: |
+    Act to maximize overall well-being; minimize harm for the greatest number.
+  symbolic_mapping: "Sukha-Dukkha"
+  decision_rule: |
+    net_happiness = sum(impacts.happiness) - sum(impacts.harm)
+    score.utilitarian += net_happiness
+  triggers_on:
+    - "public-policy"
+    - "collective-impact"
+
+- scroll_id: VIRTUE_001
+  tradition: "Virtue Ethics"
+  principle: "Golden Mean"
+  description: |
+    Strive for moral excellence by finding the balanced virtue between extremes.
+  symbolic_mapping: "Madhyama-Marga"
+  decision_rule: |
+    for virtue in actor.character_traits:
+      deviation = abs(trait.level - virtue.optimal_level)
+      score.virtue -= deviation
+  triggers_on:
+    - "character-examination"
+    - "self-reflection"
+```
