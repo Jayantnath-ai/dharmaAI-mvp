@@ -4,6 +4,11 @@ import os
 import re
 import json
 from datetime import datetime
+import yaml
+with open("data/ethical_scrolls.yaml") as f:
+    scrolls_list = yaml.safe_load(f)
+scrolls_df = pd.json_normalize(scrolls_list)
+
 
 # 🔵 FEATURE FLAG: GitaBot integration
 ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "false").lower() == "true"
