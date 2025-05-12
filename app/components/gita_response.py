@@ -1,3 +1,4 @@
+
 import os
 import json
 from datetime import datetime
@@ -21,7 +22,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         df_matrix['similarity'] = df_matrix['embedding'].apply(lambda emb: cosine_similarity(user_embedding, emb))
         verse_info = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
 
-        if mode == "Krishna-Explains":
+    if mode == "Krishna-Explains":
         import openai
         if os.getenv("OPENAI_API_KEY"):
             try:
@@ -41,7 +42,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         else:
             response = f"**🤖 Krishna-Explains (offline mode):**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response]'}"
 
-if mode == "Krishna":
+    elif mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
 
     elif mode == "Arjuna":
@@ -75,7 +76,6 @@ if mode == "Krishna":
         )
 
     elif mode == "Karmic Entanglement Simulator":
-        # Placeholder: simulate karmic entanglement
         response = (
             f"## 🧬 Karmic Entanglement Simulation\n\n"
             f"_Contemplating your question:_ **{user_input}**\n\n"
@@ -85,7 +85,7 @@ if mode == "Krishna":
             f"Which karmic fork shall you choose?"
         )
 
-        elif mode == "Vyasa":
+    elif mode == "Vyasa":
         similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
         response = (
             f"**📖 Vyasa Narrates:**\n\n"
@@ -116,7 +116,7 @@ if mode == "Krishna":
             f"2. One born of dharma, courage, or sacrifice.\n\n"
             f"Which fork holds your true self?"
         )
-# Save locally
+
     st.session_state["Usage Journal"].append({
         "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
         "mode": mode,
