@@ -8,6 +8,13 @@ from datetime import datetime
 import yaml
 import pandas as pd
 
+
+# Add the directory containing 'components' to the Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from components.gita_response import generate_gita_response
+
+
 try:
     import openai
     openai_available = True
