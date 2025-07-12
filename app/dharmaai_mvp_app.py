@@ -78,11 +78,6 @@ if streamlit_available:
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
     # Load verse matrix
-    # If Load verse matrix is empty then show error
-    if df_matrix is None or df_matrix.empty:
-        st.error("🔴 Failed to load verse matrix. Please check data files.")
-        st.stop()
-
 
     matrix_paths = [
         "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
@@ -109,6 +104,14 @@ if streamlit_available:
             st.markdown("</div>", unsafe_allow_html=True)
         except Exception as e:
             st.error(f"⚠️ Unexpected error: {e}")
+
+
+    # If Load verse matrix is empty then show error
+    if df_matrix is None or df_matrix.empty:
+        st.error("🔴 Failed to load verse matrix. Please check data files.")
+        st.stop()
+
+
 
     if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
         with st.expander("🕰️ View Past Interactions"):
