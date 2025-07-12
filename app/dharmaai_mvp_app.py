@@ -78,6 +78,12 @@ if streamlit_available:
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
     # Load verse matrix
+    # If Load verse matrix is empty then show error
+    if df_matrix is None or df_matrix.empty:
+        st.error("🔴 Failed to load verse matrix. Please check data files.")
+    	st.stop()
+
+
     matrix_paths = [
         "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
         "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
