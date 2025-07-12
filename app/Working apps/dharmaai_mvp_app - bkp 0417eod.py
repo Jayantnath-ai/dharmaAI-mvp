@@ -2,6 +2,11 @@ import sys
 import random
 import os
 import re
+import json
+from datetime import datetime
+
+# 🔵 FEATURE FLAG: GitaBot integration
+ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "false").lower() == "true"
 
 try:
     import openai
