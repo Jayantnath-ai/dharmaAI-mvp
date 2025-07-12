@@ -1,115 +1,131 @@
 import sys
-import random
 import os
-import re
+from pathlib import Path
+# Add project root to Python path
+project_root = str(Path(__file__).parent)
+sys.path.append(project_root)
+
+import random
 import json
 from datetime import datetime
-
-# 🔵 FEATURE FLAG: GitaBot integration
-ENABLE_GITABOT = True  # Force enabled for testing
-# ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "true"
-# ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "false").lower() == "false"
-# ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "false"
-
-
-
+import logging
+import numpy as np
 try:
     import openai
     openai_available = True
 except ImportError:
     openai_available = False
-
 try:
     import streamlit as st
     streamlit_available = True
 except ImportError:
     streamlit_available = False
-
 try:
     import pandas as pd
 except ImportError:
     pd = None
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
+
+# 🔵 FEATURE FLAG: GitaBot integration
+ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "true"
+
 # 🔵 MAIN GITA RESPONSE GENERATOR
-
-import numpy as np
-
 def generate_gita_response(mode, df_matrix, user_input=None):
     if not user_input or not isinstance(user_input, str) or len(user_input.strip()) < 5:
-        return "🛑 Please enter a meaningful question or ethical dilemma."
+        logger.warning("Invalid user input provided")
+        return "🛑 Please enter a meaningful question or ethical dilemma (at least 5 characters)."
+
+    if df_matrix is None or df_matrix.empty:
+        logger.error("DataFrame is None or empty")
+        return "⚠️ Error: Verse data not loaded. Please check the CSV file."
+
+    # Validate required columns
+    required_columns = ['Verse ID', 'Short English Translation', 'Symbolic Conscience Mapping', 'Ethical Trait']
+    missing_columns = [col for col in required_columns if col not in df_matrix.columns]
+    if missing_columns:
+        logger.error(f"Missing required columns: {missing_columns}")
+        return f"⚠️ Error: Missing required columns in verse data: {missing_columns}"
 
     def get_embedding(text):
+        if not text or not isinstance(text, str):
+            text = "default"
         np.random.seed(abs(hash(text)) % (2**32))
         return np.random.rand(1536)
 
     def cosine_similarity(vec1, vec2):
-        return np.dot(vec1, vec2) / (np.linalg.norm(vec1) * np.linalg.norm(vec2))
+        norm1, norm2 = np.linalg.norm(vec1), np.linalg.norm(vec2)
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+        return np.dot(vec1, vec2) / (norm1 * norm2)
 
-    user_embedding = get_embedding(user_input)
-    df_matrix['embedding'] = df_matrix['Short English Translation'].fillna("").apply(lambda x: get_embedding(x))
-    df_matrix['similarity'] = df_matrix['embedding'].apply(lambda emb: cosine_similarity(user_embedding, emb))
+    try:
+        user_embedding = get_embedding(user_input)
+        df_matrix['embedding'] = df_matrix['Short English Translation'].fillna("default").apply(get_embedding)
+        df_matrix['similarity'] = df_matrix['embedding'].apply(lambda emb: cosine_similarity(user_embedding, emb))
 
-    top_match = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
-    verse_id = top_match['Verse ID']
-    verse_text = top_match['Short English Translation']
-    symbolic_tag = top_match['Symbolic Conscience Mapping']
-    ethical_trait = top_match['Ethical Trait']
+        if df_matrix['similarity'].isna().all() or df_matrix['similarity'].max() == 0:
+            logger.warning("No valid similarity scores computed")
+            return "⚠️ Error: Unable to find a matching verse. Try rephrasing your question."
 
-    if mode == "Krishna":
-        return f"**🧠 Krishna speaks (Verse {verse_id}):**
+        top_match = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
+        verse_id = top_match['Verse ID']
+        verse_text = top_match['Short English Translation'] or "No translation available"
+        symbolic_tag = top_match['Symbolic Conscience Mapping'] or "None"
+        ethical_trait = top_match['Ethical Trait'] or "None"
 
-> _{verse_text}_
+        # Log the response details
+        logger.info(f"Generated response for mode '{mode}', verse ID: {verse_id}, similarity: {top_match['similarity']}")
 
-Symbolic Tag: **{symbolic_tag}** | Trait: _{ethical_trait}_"
-
-    elif mode == "Arjuna":
-        return f"**😟 Arjuna reflects:**
-
-_I don't know what to do about_ **{user_input}**.
-
-Let us reflect on verse {verse_id}: _{verse_text}_"
-
-    elif mode == "Vyasa":
-        return f"**📖 Vyasa narrates:**
-
-When asked _'{user_input}'_, this verse arose:
-
-> {verse_text}
-
-Symbolic Mapping: {symbolic_tag}"
-
-    elif mode == "Mirror":
-        return f"> _You are not here to get an answer. You are here to remember your own dharma._"
-
-    else:
-        return f"**💬 GitaBot says:** {verse_text}"
-
+        if mode == "Krishna":
+            return f"**🧠 Krishna speaks (Verse {verse_id}):**\n\n> _{verse_text}_\n\nSymbolic Tag: **{symbolic_tag}** | Trait: _{ethical_trait}_"
+        elif mode == "Arjuna":
+            return f"**😟 Arjuna reflects:**\n\n_I don't know what to do about_ **{user_input}**.\n\nLet us reflect on verse {verse_id}: _{verse_text}_"
+        elif mode == "Vyasa":
+            return f"**📖 Vyasa narrates:**\n\nWhen asked _'{user_input}'_, this verse arose:\n\n> {verse_text}\n\nSymbolic Mapping: {symbolic_tag}"
+        elif mode == "Dharma Mirror":
+            return f"> _You are not here to get an answer. You are here to remember your own dharma._\n\nVerse {verse_id}: {verse_text}"
+        else:
+            return f"**💬 GitaBot says:** {verse_text}"
+    except Exception as e:
+        logger.error(f"Error in generate_gita_response: {e}")
+        return f"⚠️ Error generating response: {e}"
 
 def generate_arjuna_reflections(user_input, df_matrix):
-    # … (unchanged) …
+    # Placeholder for unchanged function
     pass
 
 def generate_dharma_mirror_reflections(user_input, df_matrix):
-    # … (unchanged) …
+    # Placeholder for unchanged function
     pass
 
 # 🔵 DAILY ANALYZER
 def load_reflections(folder="saved_reflections"):
-    # … (unchanged) …
+    # Placeholder for unchanged function
     pass
 
 def analyze_reflections(reflections):
-    # … (unchanged) …
+    # Placeholder for unchanged function
     pass
 
 def display_summary(summary):
-    # … (unchanged) …
+    # Placeholder for unchanged function
     pass
 
 # 🔵 STREAMLIT UI
 if streamlit_available:
     st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
+
+    # Initialize session state
+    if "Usage Journal" not in st.session_state:
+        st.session_state["Usage Journal"] = []
 
     # Always show core Conscience Layer
     st.subheader("Ask a question to GitaBot")
@@ -120,7 +136,7 @@ if streamlit_available:
         st.stop()
 
     # ——— GitaBot-enabled UI ———
-    available_modes = ["Krishna", "Krishna-Explains", "Arjuna", "Dharma Mirror"]
+    available_modes = ["Krishna", "Arjuna", "Vyasa", "Dharma Mirror"]
     mode = st.sidebar.radio("Select Mode", available_modes)
 
     if st.sidebar.button("📊 Analyze Today's Reflections"):
@@ -141,9 +157,17 @@ if streamlit_available:
         if os.path.exists(path):
             try:
                 df_matrix = pd.read_csv(path, encoding='utf-8')
+                logger.info(f"Loaded verse matrix from {path}")
+                break
             except UnicodeDecodeError:
                 df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
-            break
+                logger.info(f"Loaded verse matrix from {path} with ISO-8859-1 encoding")
+                break
+            except Exception as e:
+                logger.error(f"Failed to load {path}: {e}")
+    if df_matrix is None:
+        st.error("⚠️ Error: Could not load verse matrix CSV file. Please check the file path.")
+        st.stop()
 
     if st.button("🔍 Submit"):
         try:
@@ -154,9 +178,20 @@ if streamlit_available:
             )
             st.markdown(response, unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
+            # Log interaction to session state
+            st.session_state["Usage Journal"].append({
+                "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "mode": mode,
+                "input": user_input,
+                "response": response
+            })
         except Exception as e:
+            logger.error(f"Streamlit UI error: {e}")
             st.error(f"⚠️ Unexpected error: {e}")
 
-    if "Usage Journal" in st.session_state and st.session_state["Usage Journal"]:
+    if st.session_state["Usage Journal"]:
         with st.expander("🕰️ View Past Interactions"):
             st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
+else:
+    logger.error("Streamlit is not available. Please install streamlit to run the UI.")
+    print("Streamlit is not available. Please install streamlit to run the UI.")
