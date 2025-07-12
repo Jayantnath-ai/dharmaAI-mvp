@@ -81,7 +81,7 @@ if streamlit_available:
     # If Load verse matrix is empty then show error
     if df_matrix is None or df_matrix.empty:
         st.error("🔴 Failed to load verse matrix. Please check data files.")
-    	st.stop()
+        st.stop()
 
 
     matrix_paths = [
