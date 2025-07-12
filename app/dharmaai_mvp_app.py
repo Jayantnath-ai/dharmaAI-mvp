@@ -6,10 +6,11 @@ import json
 from datetime import datetime
 
 # 🔵 FEATURE FLAG: GitaBot integration
-ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "false"
-# ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "false").lower() == "true"
+ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "false").lower() == "true"
 # ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "true"
 # ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "false").lower() == "false"
+# ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "false"
+
 
 
 try:
