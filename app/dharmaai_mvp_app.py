@@ -22,7 +22,6 @@ try:
 except ImportError:
     pd = None
 
-# 🔵 MAIN GITA RESPONSE GENERATOR
 def generate_gita_response(mode, df_matrix, user_input=None):
     if not user_input or len(user_input.strip()) < 5:
         return "🛑 Please ask a more complete or meaningful question."
@@ -41,6 +40,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     prompt_tokens = int(len(user_input.split()) * token_multiplier)
     response_tokens = 120
     total_tokens = prompt_tokens + response_tokens
+    estimated_cost = round((total_tokens / 1000) * 0.002, 6)
 
     if streamlit_available and "Usage Journal" not in st.session_state:
         st.session_state["Usage Journal"] = []
@@ -108,7 +108,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             f"</div>"
         )
 
-    # Save silently
+    # Save quietly after each interaction
     if streamlit_available:
         st.session_state["Usage Journal"].append({
             "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
@@ -116,10 +116,14 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             "role": user_role,
             "question": user_input,
             "response": response,
+            "tokens": total_tokens,
+            "cost_usd": estimated_cost,
+            "model": st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo"),
             "timestamp": datetime.now().isoformat()
         })
 
         SAVE_FOLDER = os.path.join(os.getcwd(), "saved_reflections")
+
         if not os.path.exists(SAVE_FOLDER):
             os.makedirs(SAVE_FOLDER)
 
@@ -136,7 +140,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
     return response
 
-# 🔵 SUPPORT FUNCTIONS
 def generate_arjuna_reflections(user_input, df_matrix):
     import numpy as np
     import random
@@ -230,55 +233,6 @@ def generate_dharma_mirror_reflections(user_input, df_matrix):
 
     return reflections_templates, matched_verse_text
 
-# 🔵 DAILY ANALYZER
-def load_reflections(folder="saved_reflections"):
-    today = datetime.now().strftime("%Y-%m-%d")
-    reflections = []
-    for filename in os.listdir(folder):
-        if filename.endswith(".json"):
-            filepath = os.path.join(folder, filename)
-            with open(filepath, "r", encoding="utf-8") as f:
-                session = json.load(f)
-                for entry in session:
-                    if today in entry.get("timestamp", ""):
-                        reflections.append(entry)
-    return reflections
-
-def analyze_reflections(reflections):
-    if not reflections:
-        return None
-
-    df = pd.DataFrame(reflections)
-    top_tags = df['response'].str.extract(r'\*\*(.*?)\*\*').value_counts().head(5)
-    top_verses = df['verse_id'].value_counts().head(5)
-    timeline = df['timestamp'].apply(lambda x: x[11:16])
-
-    summary = {
-        "total_questions": len(df),
-        "top_tags": top_tags,
-        "top_verses": top_verses,
-        "timeline": timeline.tolist()
-    }
-    return summary
-
-def display_summary(summary):
-    if not summary:
-        st.info("No reflections saved yet today.")
-        return
-
-    st.header("📅 Daily Dharma Reflection Summary")
-    st.write(f"**Total Reflections Today:** {summary['total_questions']}")
-
-    st.subheader("🧠 Top Dharma Themes Reflected")
-    st.write(summary['top_tags'])
-
-    st.subheader("📜 Top Gita Verses Matched")
-    st.write(summary['top_verses'])
-
-    st.subheader("🕰️ Timeline of Reflections")
-    st.line_chart(pd.Series([1]*len(summary['timeline']), index=summary['timeline']))
-
-# 🔵 STREAMLIT UI
 if streamlit_available:
     st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
@@ -286,11 +240,6 @@ if streamlit_available:
 
     available_modes = ["Krishna", "Krishna-Explains", "Arjuna", "Dharma Mirror"]
     mode = st.sidebar.radio("Select Mode", available_modes)
-
-    if st.sidebar.button("📊 Analyze Today's Reflections"):
-        reflections = load_reflections()
-        summary = analyze_reflections(reflections)
-        display_summary(summary)
 
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
