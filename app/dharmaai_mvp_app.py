@@ -78,22 +78,22 @@ if not helpers_available:
 def generate_gita_response(mode, df_matrix, user_input=None):
     if not user_input or len(user_input.strip()) < 5:
         logger.warning("Invalid user input provided")
-        return "🛑 Please ask a more complete or meaningful question."
+        return "🛑 Please ask a more complete or meaningful question.", None
 
     if not pd or not np:
         logger.error("Pandas or NumPy not installed")
-        return "⚠️ Error: Required libraries (pandas, numpy) not installed."
+        return "⚠️ Error: Required libraries (pandas, numpy) not installed.", None
 
     if df_matrix is None or df_matrix.empty:
         logger.error("DataFrame is None or empty")
-        return "⚠️ Error: Verse data not loaded. Please check the CSV file."
+        return "⚠️ Error: Verse data not loaded. Please check the CSV file.", None
 
     # Validate required columns
     required_columns = ['Verse ID', 'Short English Translation', 'Symbolic Conscience Mapping']
     missing_columns = [col for col in required_columns if col not in df_matrix.columns]
     if missing_columns:
         logger.error(f"Missing required columns: {missing_columns}")
-        return f"⚠️ Error: Missing required columns in verse data: {missing_columns}"
+        return f"⚠️ Error: Missing required columns in verse data: {missing_columns}", None
 
     user_role = "seeker"
     token_multiplier = 1.25
@@ -116,12 +116,12 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
             if df_matrix['similarity'].isna().all() or df_matrix['similarity'].max() == 0:
                 logger.warning("No valid similarity scores computed")
-                return "⚠️ Error: Unable to find a matching verse. Try rephrasing your question."
+                return "⚠️ Error: Unable to find a matching verse. Try rephrasing your question.", None
 
             verse_info = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
     except Exception as e:
         logger.error(f"Error computing embeddings or similarity: {e}")
-        return f"⚠️ Error computing embeddings or similarity: {str(e)}"
+        return f"⚠️ Error computing embeddings or similarity: {str(e)}", None
 
     # Simplify f-strings by using intermediate variables
     verse_id = verse_info['Verse ID'] if verse_info is not None else '[unknown]'
@@ -289,7 +289,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             logger.error(f"Failed to save reflection: {e}")
             st.error(f"❌ Failed to save reflection: {e}")
 
-    return response
+    return response, verse_info
 
 # 🔵 SUPPORT FUNCTIONS
 def generate_arjuna_reflections(user_input, df_matrix):
@@ -413,7 +413,7 @@ if streamlit_available:
 
     if st.button("🔍 Submit"):
         try:
-            response = generate_gita_response(mode, df_matrix, user_input)
+            response, verse_info = generate_gita_response(mode, df_matrix, user_input)
             st.markdown(
                 "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
                 unsafe_allow_html=True
@@ -421,7 +421,7 @@ if streamlit_available:
             if response.startswith("⚠️") or response.startswith("❌"):
                 st.error(response)
             else:
-                if verse_info is not None:
+                if verse_info is not None and 'Verse ID' in verse_info and 'Symbolic Conscience Mapping' in verse_info:
                     st.markdown(
                         f"<small>📘 Verse ID: {verse_info['Verse ID']} — <em>{verse_info['Symbolic Conscience Mapping']}</em></small>",
                         unsafe_allow_html=True
