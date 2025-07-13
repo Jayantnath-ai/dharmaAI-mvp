@@ -151,7 +151,7 @@ st.session_state["Usage Journal"].append(
         "response": response,
         "timestamp": datetime.now().isoformat(),
     }
-)
+
 
 SAVE_FOLDER = os.path.join(os.getcwd(), "saved_reflections")
 os.makedirs(SAVE_FOLDER, exist_ok=True)
@@ -162,5 +162,5 @@ try:
         json.dump(st.session_state["Usage Journal"], f, ensure_ascii=False, indent=2)
 except Exception as e:
     st.error(f"❌ Failed to save reflection: {e}")
-
 return response
+)
