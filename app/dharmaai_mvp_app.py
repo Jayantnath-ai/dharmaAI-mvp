@@ -247,22 +247,12 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         ethical_trait = top_match['Ethical Trait']
 
         response = (
-            f"**📖 Vyasa Narrates:**
-
-"
-            f"_“In an age not unlike this, a soul once pondered —_ 
-"
-            f"‘{user_input}’
-
-"
-            f"_To this, the Teacher spoke — verse {verse_id},_
-"
-            f"bearing the mark of **{symbolic_tag}** and the trait of **{ethical_trait}**:
-
-"
-            f"> _{verse_text}_
-
-"
+            f"**📖 Vyasa Narrates:**"
+            f"_“In an age not unlike this, a soul once pondered —_ "
+            f"‘{user_input}’"
+            f"_To this, the Teacher spoke — verse {verse_id},_"
+            f"bearing the mark of **{symbolic_tag}** and the trait of **{ethical_trait}**:"
+            f"> _{verse_text}_"
             f"And the seeker was never the same again."
         )
 
