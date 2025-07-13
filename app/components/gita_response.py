@@ -117,7 +117,7 @@ elif mode == "Forked Fate Contemplation":
             f"Which fork holds your true self?"
         )
 # Save locally
-    st.session_state["Usage Journal"].append({
+st.session_state["Usage Journal"].append({
         "verse_id": verse_info['Verse ID'] if verse_info is not None else None,
         "mode": mode,
         "question": user_input,
