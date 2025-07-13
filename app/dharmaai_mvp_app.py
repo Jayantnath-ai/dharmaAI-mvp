@@ -247,7 +247,13 @@ def generate_gita_response(mode, df_matrix, user_input=None):
             f"> _{translation}_"
         )
     elif mode == "Technical":
-        response = (
+        similarity_score = top_match['similarity']
+        verse_id = top_match['Verse ID']
+        verse_text = top_match['Short English Translation']
+        symbolic_tag = top_match['Symbolic Conscience Mapping']
+        ethical_trait = top_match['Ethical Trait']
+
+	response = (
             f"🔧 Technical Debug Info:\n"
             f"- Question: {user_input}\n"
             f"- Mode: {mode}\n"
