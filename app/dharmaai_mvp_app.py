@@ -238,22 +238,36 @@ def generate_gita_response(mode, df_matrix, user_input=None):
                 f"> Ask again, and you may discover your dharma.\n\n"
                 f"> [Error in Dharma Mirror reflections: {str(e)}]"
             )
+    
     elif mode == "Vyasa":
-        response = (
-            f"**📖 Vyasa Narrates:**\n\n"
-            f"Long ago, a seeker once asked: _'{user_input}'_.\n\n"
-            f"To this, Krishna replied in verse {verse_id}\n"
-            f"(Symbolic Tag: {symbolic_tag}, Similarity Score: {similarity_score}):\n"
-            f"> _{translation}_"
-        )
-    elif mode == "Technical":
         similarity_score = top_match['similarity']
         verse_id = top_match['Verse ID']
         verse_text = top_match['Short English Translation']
         symbolic_tag = top_match['Symbolic Conscience Mapping']
         ethical_trait = top_match['Ethical Trait']
 
-	response = (
+        response = (
+            f"**📖 Vyasa Narrates:**
+
+"
+            f"_“In an age not unlike this, a soul once pondered —_ 
+"
+            f"‘{user_input}’
+
+"
+            f"_To this, the Teacher spoke — verse {verse_id},_
+"
+            f"bearing the mark of **{symbolic_tag}** and the trait of **{ethical_trait}**:
+
+"
+            f"> _{verse_text}_
+
+"
+            f"And the seeker was never the same again."
+        )
+
+    elif mode == "Technical":
+        response = (
             f"🔧 Technical Debug Info:\n"
             f"- Question: {user_input}\n"
             f"- Mode: {mode}\n"
