@@ -44,7 +44,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 if mode == "Krishna":
         response = f"**🧠 Krishna teaches:**\n\n_You asked:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Symbolic dharma insight would be offered here]'}"
 
-    elif mode == "Arjuna":
+elif mode == "Arjuna":
         reflections, matched_verse = generate_arjuna_reflections(user_input, df_matrix)
         reflection_text = "\n".join([f"{idx+1}. {line}" for idx, line in enumerate(reflections)])
         response = (
@@ -59,7 +59,7 @@ if mode == "Krishna":
             f"</div>"
         )
 
-    elif mode == "Dharma Mirror":
+elif mode == "Dharma Mirror":
         reflections, matched_verse = generate_dharma_mirror_reflections(user_input, df_matrix)
         reflection_text = "\n".join([f"{idx+1}. {line}" for idx, line in enumerate(reflections)])
         response = (
