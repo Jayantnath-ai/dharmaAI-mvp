@@ -4,9 +4,8 @@ import os
 import re
 import json
 from datetime import datetime
-import pandas as pd
-from components.gita_response import generate_gita_response
-from components.analyzer import display_summary, load_reflections, analyze_reflections
+
+
 
 # Based on source code dharmaai_mvp_app_FeatureOffToggle 07122025
 
@@ -33,8 +32,8 @@ except ImportError:
 
 # 🔵 MAIN GITA RESPONSE GENERATOR
 def generate_gita_response(mode, df_matrix, user_input=None):
-    # … [leave this function unchanged] …
-    pass  # (omitted here for brevity)
+    from components.gita_response import generate_gita_response
+    pass	
 
 # 🔵 SUPPORT FUNCTIONS
 def generate_arjuna_reflections(user_input, df_matrix):
@@ -47,15 +46,15 @@ def generate_dharma_mirror_reflections(user_input, df_matrix):
 
 # 🔵 DAILY ANALYZER
 def load_reflections(folder="saved_reflections"):
-    # … (unchanged) …
+    from components.analyzer import load_reflections
     pass
 
 def analyze_reflections(reflections):
-    # … (unchanged) …
+    from components.analyzer import analyze_reflections
     pass
 
 def display_summary(summary):
-    # … (unchanged) …
+    from components.analyzer import display_summary
     pass
 
 # 🔵 STREAMLIT UI
