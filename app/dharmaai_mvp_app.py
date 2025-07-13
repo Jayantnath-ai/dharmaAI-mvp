@@ -241,7 +241,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
     elif mode == "Vyasa":
         response = (
             f"**📖 Vyasa Narrates:**\n\n"
-            f"Long ago, a seeker once asked: _'{user_input}'_.\n\n"
+            f"Long ago, a seeker once asked a question similar to: _'{user_input}'_.\n\n"
             f"To this, Krishna replied in verse {verse_id}\n"
             f"(Symbolic Tag: {symbolic_tag}, Similarity Score: {similarity_score}):\n"
             f"> _{translation}_"
