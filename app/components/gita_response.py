@@ -22,7 +22,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         verse_info = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
 
         if mode == "Krishna-Explains":
-         import openai
+        import openai
         if os.getenv("OPENAI_API_KEY"):
             try:
                 system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance.\nVerse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Mapping']}'"
