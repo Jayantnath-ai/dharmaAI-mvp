@@ -74,7 +74,7 @@ elif mode == "Dharma Mirror":
             f"</div>"
         )
 
-    elif mode == "Karmic Entanglement Simulator":
+elif mode == "Karmic Entanglement Simulator":
         # Placeholder: simulate karmic entanglement
         response = (
             f"## 🧬 Karmic Entanglement Simulation\n\n"
@@ -85,7 +85,7 @@ elif mode == "Dharma Mirror":
             f"Which karmic fork shall you choose?"
         )
 
-        elif mode == "Vyasa":
+elif mode == "Vyasa":
         similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
         response = (
             f"**📖 Vyasa Narrates:**\n\n"
@@ -95,7 +95,7 @@ elif mode == "Dharma Mirror":
             f"> _{verse_info['Short English Translation'] if verse_info else '[Gita wisdom unavailable]'}_"
         )
 
-    elif mode == "Technical":
+elif mode == "Technical":
         similarity_score = verse_info['similarity'] if verse_info is not None and 'similarity' in verse_info else 'N/A'
         response = (
             f"🔧 Technical Debug Info:\n"
@@ -107,7 +107,7 @@ elif mode == "Dharma Mirror":
             f"- Model: {st.session_state.get('OPENAI_MODEL', 'gpt-3.5-turbo')}"
         )
 
-    elif mode == "Forked Fate Contemplation":
+elif mode == "Forked Fate Contemplation":
         response = (
             f"## 🧭 Forked Fate Contemplation\n\n"
             f"_You asked:_ **{user_input}**\n\n"
