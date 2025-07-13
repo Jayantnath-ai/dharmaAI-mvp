@@ -54,13 +54,6 @@ except ImportError:
     logger.warning("utils.helpers not found; using fallback get_embedding and cosine_similarity")
 
 try:
-    from utils.dharma_mirror_utils import generate_dharma_mirror_reflections
-    dharma_mirror_utils_available = True
-except ImportError:
-    dharma_mirror_utils_available = False
-    logger.warning("utils.dharma_mirror_utils not found; using fallback generate_dharma_mirror_reflections")
-
-try:
     from components.modes import generate_arjuna_reflections, generate_dharma_mirror_reflections
     modes_available = True
 except ImportError:
