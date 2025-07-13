@@ -34,6 +34,7 @@ except ImportError:
 
 try:
     import streamlit as st
+    import streamlit
     streamlit_available = True
 except ImportError:
     streamlit_available = False
@@ -408,7 +409,14 @@ if streamlit_available:
             st.session_state["Previous Questions"] = []
         st.session_state["Previous Questions"].append("[Ask Another Clicked]")
         st.markdown("<script>window.scrollTo({ top: 0, behavior: 'smooth' });</script>", unsafe_allow_html=True)
-        st.experimental_rerun()
+        try:
+            st.rerun()  # Use st.rerun for Streamlit >= 1.37.0
+        except AttributeError:
+            try:
+                st.experimental_rerun()  # Fallback for older Streamlit versions
+            except AttributeError:
+                logger.error("Streamlit rerun method not available. Please update Streamlit to 1.37.0 or higher, or use experimental_rerun for older versions.")
+                st.error("⚠️ Error: Streamlit rerun method not available. Please update Streamlit.")
     st.markdown("</div>", unsafe_allow_html=True)
 
     if st.button("🔍 Submit"):
