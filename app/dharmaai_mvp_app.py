@@ -58,14 +58,14 @@ try:
     dharma_mirror_utils_available = True
 except ImportError:
     dharma_mirror_utils_available = False
-    logger.warning("utils.dharma_mirror_utils not found; using fallback generate_dharma_mirror_reflections")
+    logger.warning("utils.dharma_mirror_utils not found; using fallback for Dharma Mirror reflections")
 
 try:
-    from components.modes import generate_arjuna_reflections, generate_dharma_mirror_reflections
+    from components.modes import generate_arjuna_reflections
     modes_available = True
 except ImportError:
     modes_available = False
-    logger.warning("components.modes not found; using fallback for Arjuna and Dharma Mirror modes")
+    logger.warning("components.modes not found; using fallback for Arjuna reflections")
 
 # 🔵 Fallback functions for get_embedding and cosine_similarity
 if not helpers_available:
@@ -81,6 +81,17 @@ if not helpers_available:
             logger.warning("Zero norm in cosine similarity")
             return 0.0
         return np.dot(vec1, vec2) / (norm1 * norm2)
+
+# 🔵 Fallback function for Dharma Mirror reflections
+if not dharma_mirror_utils_available:
+    def generate_dharma_mirror_reflections(user_input, df_matrix):
+        logger.warning("Using fallback for generate_dharma_mirror_reflections")
+        reflections = [
+            "Fallback: Reflect on your question to find clarity.",
+            "Fallback: Consider the consequences of your actions.",
+            "Fallback: Seek the path of dharma."
+        ]
+        return reflections, None
 
 # 🔵 MAIN GITA RESPONSE GENERATOR
 def generate_gita_response(mode, df_matrix, user_input=None):
@@ -205,35 +216,27 @@ def generate_gita_response(mode, df_matrix, user_input=None):
                 f"> [Arjuna reflections unavailable; please ensure components.modes is accessible]"
             )
     elif mode == "Dharma Mirror":
-        if modes_available:
-            try:
-                reflections, matched_verse = generate_dharma_mirror_reflections(user_input, df_matrix)
-                reflection_text = "\n".join([f"{idx+1}. {line}" for idx, line in enumerate(reflections)])
-                response = (
-                    f"## 🪞 Dharma Mirror Reflections\n\n"
-                    f"_Contemplating your question:_ **{user_input}**\n\n"
-                    f"Here are sacred conscience reflections to guide you:\n\n"
-                    f"{reflection_text}\n\n"
-                    f"---\n\n"
-                    f"### 📜 Matched Gita Verse\n\n"
-                    f"<div style='background-color: #f0f0f0; padding: 1rem; border-radius: 10px;'>"
-                    f"<em>{matched_verse}</em>"
-                    f"</div>"
-                )
-            except Exception as e:
-                logger.error(f"Error in Dharma Mirror reflections: {e}")
-                response = (
-                    f"> You are not here to receive the answer.\n"
-                    f"> You are here to see your reflection.\n"
-                    f"> Ask again, and you may discover your dharma.\n\n"
-                    f"> [Error in Dharma Mirror reflections: {str(e)}]"
-                )
-        else:
+        try:
+            reflections, matched_verse = generate_dharma_mirror_reflections(user_input, df_matrix)
+            reflection_text = "\n".join([f"{idx+1}. {line}" for idx, line in enumerate(reflections)])
+            response = (
+                f"## 🪞 Dharma Mirror Reflections\n\n"
+                f"_Contemplating your question:_ **{user_input}**\n\n"
+                f"Here are sacred conscience reflections to guide you:\n\n"
+                f"{reflection_text}\n\n"
+                f"---\n\n"
+                f"### 📜 Matched Gita Verse\n\n"
+                f"<div style='background-color: #f0f0f0; padding: 1rem; border-radius: 10px;'>"
+                f"<em>{matched_verse if matched_verse is not None else translation}</em>"
+                f"</div>"
+            )
+        except Exception as e:
+            logger.error(f"Error in Dharma Mirror reflections: {e}")
             response = (
                 f"> You are not here to receive the answer.\n"
                 f"> You are here to see your reflection.\n"
                 f"> Ask again, and you may discover your dharma.\n\n"
-                f"> [Dharma Mirror reflections unavailable; please ensure components.modes is accessible]"
+                f"> [Error in Dharma Mirror reflections: {str(e)}]"
             )
     elif mode == "Vyasa":
         response = (
@@ -255,7 +258,7 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         )
     elif mode == "Karmic Entanglement Simulator":
         response = (
-            f"## 🧬 Karmic Entanglement Simulation\n\n"
+            f"## 🧬 Karmic Entanglement Simulator\n\n"
             f"_Contemplating your question:_ **{user_input}**\n\n"
             f"Two dharmic echoes appear across lives:\n\n"
             f"- In one, attachment leads to repetition.\n"
@@ -301,10 +304,6 @@ def generate_gita_response(mode, df_matrix, user_input=None):
 
 # 🔵 SUPPORT FUNCTIONS
 def generate_arjuna_reflections(user_input, df_matrix):
-    # Placeholder (unchanged)
-    pass
-
-def generate_dharma_mirror_reflections(user_input, df_matrix):
     # Placeholder (unchanged)
     pass
 
