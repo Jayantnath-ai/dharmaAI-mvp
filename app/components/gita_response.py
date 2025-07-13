@@ -22,22 +22,22 @@ def generate_gita_response(mode, df_matrix, user_input=None):
         verse_info = df_matrix.sort_values(by='similarity', ascending=False).iloc[0]
 
         if mode == "Krishna-Explains":
-        import openai
-        if os.getenv("OPENAI_API_KEY"):
-            try:
-                system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance.\nVerse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Mapping']}'"
-                completion = openai.ChatCompletion.create(
-                    model=st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo"),
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_input}
-                    ],
-                    temperature=0.7
-                )
-                reply = completion.choices[0].message.content.strip()
-                response = f"**🤖 Krishna-Explains :**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
-            except Exception as e:
-                response = f"❌ Error fetching response from Krishna-Explains: {str(e)}"
+            import openai
+            if os.getenv("OPENAI_API_KEY"):
+                try:
+                    system_prompt = f"You are Krishna from the Bhagavad Gita. Provide dharma-aligned, symbolic, and contextual guidance.\nVerse context: '{verse_info['Short English Translation']}' with symbolic tag '{verse_info['Symbolic Conscience Mapping']}'"
+                    completion = openai.ChatCompletion.create(
+                        model=st.session_state.get("OPENAI_MODEL", "gpt-3.5-turbo"),
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": user_input}
+                        ],
+                        temperature=0.7
+                    )
+                    reply = completion.choices[0].message.content.strip()
+                    response = f"**🤖 Krishna-Explains :**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {reply}"
+                except Exception as e:
+                    response = f"❌ Error fetching response from Krishna-Explains: {str(e)}"
         else:
             response = f"**🤖 Krishna-Explains (offline mode):**\n\n_Reflecting on your question:_ **{user_input}**\n\n> {verse_info['Short English Translation'] if verse_info is not None else '[Simulated GPT response]'}"
 
