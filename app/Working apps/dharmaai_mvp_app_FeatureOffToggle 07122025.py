@@ -8,7 +8,6 @@ import pandas as pd
 from components.gita_response import generate_gita_response
 from components.analyzer import display_summary, load_reflections, analyze_reflections
 
-# Based on source code dharmaai_mvp_app_FeatureOffToggle 07122025
 
 # 🔵 FEATURE FLAG: GitaBot integration
 ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "false").lower() == "true"
