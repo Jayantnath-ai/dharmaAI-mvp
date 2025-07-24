@@ -1,22 +1,8 @@
-name: MCP CI
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    - run: pip install -r requirements.txt
-    - run: pre-commit run --all-files
-    - run: pytest  # your tests
-    - name: Deploy to Streamlit
-      if: github.ref == 'refs/heads/main'
-      uses: streamlit/actions@v1
-      with:
-        repo_token: ${{ secrets.GITHUB_TOKEN }}
+# MCP Context Envelope Schema
+envelope:
+  scrolls:      # list of string IDs of scrolls, e.g. ['001', '002']
+  modes:        # list of persona modes, e.g. ['Krishna', 'Krishna-Explains', 'Arjuna', 'Dharma Mirror', 'Vyasa', 'Technical', 'Karmic Entanglement Simulator', 'Forked Fate Contemplation']
+  user_id:      # unique user identifier, e.g. 'jayant'
+  timestamp:    # ISO8601 UTC timestamp, e.g. '2025-07-24T14:00:00Z'
+  git_commit:   # Git commit hash auto-filled by packer, e.g. 'a1b2c3d'
+  summary:      # optional auto-generated summary of scroll contents
