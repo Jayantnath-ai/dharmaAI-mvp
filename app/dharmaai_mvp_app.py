@@ -1,4 +1,9 @@
-import sysimport osimport jsonfrom datetime import datetimefrom pathlib import Pathimport logging
+import sys
+import os
+import json
+from datetime import datetime
+from pathlib import Path
+import logging
 #🔵 Set project root (modify as needed)
 project_root = str(Path(file).parent)sys.path.append(project_root)logger = logging.getLogger(name)logger.info(f"Project root set to: {project_root}")logger.info(f"sys.path updated: {sys.path}")
 #🔵 FEATURE FLAG: GitaBot integration
@@ -256,7 +261,7 @@ available_modes = [
     "Dharma Mirror",
     "Vyasa",
     "Technical",
-    "Karmic Entanglement Simulator",
+    "Karmic Entanglement Simulator",s
     "Forked Fate Contemplation"
 ]
 mode = st.sidebar.radio("Select Mode", available_modes)
