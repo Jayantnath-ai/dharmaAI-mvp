@@ -300,5 +300,6 @@ if st.button("🔍 Submit"):
 if st.session_state["Usage Journal"]:
     with st.expander("🕰️ View Past Interactions"):
         st.dataframe(pd.DataFrame(st.session_state["Usage Journal"]))
-
-else:    logger.error("Streamlit is not available. Please install streamlit to run the UI.")    print("Streamlit is not available. Please install streamlit to run the UI.")
+else:
+    logger.error("Streamlit is not available. Please install streamlit to run the UI.")
+    print("Streamlit is not available. Please install streamlit to run the UI.")
