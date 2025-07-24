@@ -1,7 +1,7 @@
 import sysimport osimport jsonfrom datetime import datetimefrom pathlib import Pathimport logging
-🔵 Set project root (modify as needed)
+#🔵 Set project root (modify as needed)
 project_root = str(Path(file).parent)sys.path.append(project_root)logger = logging.getLogger(name)logger.info(f"Project root set to: {project_root}")logger.info(f"sys.path updated: {sys.path}")
-🔵 FEATURE FLAG: GitaBot integration
+#🔵 FEATURE FLAG: GitaBot integration
 ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "true"
 Configure logging
 logging.basicConfig(    level=logging.INFO,    format="%(asctime)s - %(levelname)s - %(message)s",    handlers=[logging.StreamHandler()])
@@ -12,7 +12,7 @@ try:    from utils.helpers import get_embedding, cosine_similarity    helpers_av
 try:    from utils.dharma_mirror_utils import generate_dharma_mirror_reflections    dharma_mirror_utils_available = Trueexcept ImportError:    dharma_mirror_utils_available = False    logger.warning("utils.dharma_mirror_utils not found; using fallback for Dharma Mirror reflections")
 try:    from components.modes import generate_arjuna_reflections    modes_available = Trueexcept ImportError:    modes_available = False    logger.warning("components.modes not found; using fallback for Arjuna reflections")
 try:    from sentence_transformers import SentenceTransformer    sentence_transformers_available = Trueexcept ImportError:    sentence_transformers_available = False    logger.warning("sentence_transformers not found; Sentence-BERT embeddings unavailable")
-🔵 Fallback functions for get_embedding and cosine_similarity
+#🔵 Fallback functions for get_embedding and cosine_similarity
 if not helpers_available:    def get_embedding(text):        if not text or not isinstance(text, str):            text = "default"        if sentence_transformers_available:            try:                model = SentenceTransformer('all-MiniLM-L6-v2')                return model.encode(text, convert_to_numpy=True)            except Exception as e:                logger.error(f"Error loading Sentence-BERT model: {e}")        # Fallback to random embedding        np.random.seed(abs(hash(text)) % (2**32))        return np.random.rand(1536)
 def cosine_similarity(vec1, vec2):
     norm1, norm2 = np.linalg.norm(vec1), np.linalg.norm(vec2)
@@ -21,9 +21,9 @@ def cosine_similarity(vec1, vec2):
         return 0.0
     return np.dot(vec1, vec2) / (norm1 * norm2)
 
-🔵 Fallback function for Dharma Mirror reflections
+#🔵 Fallback function for Dharma Mirror reflections
 if not dharma_mirror_utils_available:    def generate_dharma_mirror_reflections(user_input, df_matrix):        logger.warning("Using fallback for generate_dharma_mirror_reflections")        reflections = [            "Fallback: Reflect on your question to find clarity.",            "Fallback: Consider the consequences of your actions.",            "Fallback: Seek the path of dharma."        ]        return reflections, None
-🔵 MAIN GITA RESPONSE GENERATOR
+#🔵 MAIN GITA RESPONSE GENERATOR
 def generate_gita_response(mode, df_matrix, user_input=None):    if not user_input or len(user_input.strip()) < 5:        logger.warning("Invalid user input provided")        return "🛑 Please ask a more complete or meaningful question.", None
 if not pd or not np:
     logger.error("Pandas or NumPy not installed")
@@ -228,13 +228,13 @@ if streamlit_available:
 
 return response, verse_info
 
-🔵 SUPPORT FUNCTIONS
+#🔵 SUPPORT FUNCTIONS
 def generate_arjuna_reflections(user_input, df_matrix):    # Placeholder (unchanged)    pass
-🔵 DAILY ANALYZER
+#🔵 DAILY ANALYZER
 def load_reflections(folder="saved_reflections"):    from components.analyzer import load_reflections    pass
 def analyze_reflections(reflections):    from components.analyzer import analyze_reflections    pass
 def display_summary(summary):    from components.analyzer import display_summary    pass
-🔵 STREAMLIT UI
+#🔵 STREAMLIT UI
 if streamlit_available:    st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")    st.title("🪔 DharmaAI – Minimum Viable Conscience")
 # Initialize session state
 if "Usage Journal" not in st.session_state:

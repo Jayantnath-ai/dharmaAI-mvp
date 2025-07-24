@@ -1,0 +1,22 @@
+name: MCP CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    - run: pip install -r requirements.txt
+    - run: pre-commit run --all-files
+    - run: pytest  # your tests
+    - name: Deploy to Streamlit
+      if: github.ref == 'refs/heads/main'
+      uses: streamlit/actions@v1
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
