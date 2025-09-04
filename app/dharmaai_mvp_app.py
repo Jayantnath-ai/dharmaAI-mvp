@@ -228,8 +228,8 @@ Act without attachment to outcomes. Let clarity guide action; align with duty ov
 **Why this verse?** Your query semantically matched teachings on detachment and right action.
 """
     elif mode == "Krishna-Explains":
-    plan = generate_action_plan(user_input, verse_text, verse_tag)
-    body = f"""
+    	plan = generate_action_plan(user_input, verse_text, verse_tag)
+    	body = f"""
 **Krishna's Teaching — Explained**  
 This verse instructs that *right action* is measured by intent and alignment with duty, not by clinging to outcomes.  
 Attachment breeds anxiety and bias; detachment clears the mind to see the dharmic path.
