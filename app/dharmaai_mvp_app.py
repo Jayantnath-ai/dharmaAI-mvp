@@ -1,4 +1,3 @@
-
 import sys
 import os
 from pathlib import Path
@@ -26,7 +25,7 @@ try:
     import streamlit as st
     STREAMLIT = True
     st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
-except Exception as e:
+except Exception:
     STREAMLIT = False
     st = None
     logger.error("Streamlit is not available. Install streamlit to run the UI.")
@@ -35,7 +34,7 @@ try:
     import pandas as pd
     import numpy as np
     PANDAS_NUMPY = True
-except Exception as e:
+except Exception:
     pd = None
     np = None
     PANDAS_NUMPY = False
@@ -73,6 +72,28 @@ except Exception:
     HAS_MODES = False
     logger.warning("components.modes not found; using fallback for Arjuna reflections")
 
+# ---------- Utility helpers (PATCH) ----------
+def _ensure_list(x):
+    """Return x as a list; unwrap (list, meta) tuples; wrap singletons."""
+    if x is None:
+        return []
+    if isinstance(x, tuple) and len(x) >= 1:
+        x = x[0]
+    if isinstance(x, (list, tuple)):
+        return list(x)
+    return [x]
+
+def bulletize(items, max_items=3):
+    """Flatten one level & coerce to str so join() never fails."""
+    out = []
+    for itm in _ensure_list(items)[:max_items]:
+        if isinstance(itm, (list, tuple)):
+            itm = " ".join(map(str, itm))
+        else:
+            itm = str(itm)
+        out.append(f"- {itm}")
+    return "\n".join(out) if out else "- (no reflections)"
+
 # ---------- Fallback utilities ----------
 def _fallback_embedding(text: str):
     if not PANDAS_NUMPY:
@@ -85,7 +106,6 @@ def _fallback_embedding(text: str):
             return model.encode(text, convert_to_numpy=True)
         except Exception as e:
             logger.error(f"Error loading Sentence-BERT model: {e}")
-    # Fallback to deterministic pseudo-random vector to keep UX stable
     rng = np.random.default_rng(abs(hash(text)) % (2**32))
     return rng.random(384)
 
@@ -98,7 +118,7 @@ def _fallback_cosine(a, b):
         return 0.0
     return float(np.dot(a, b) / (na * nb))
 
-# Public wrappers used by the app
+# Public wrappers
 def get_embedding(text):
     if HELPERS:
         try:
@@ -118,10 +138,10 @@ def cosine_similarity(v1, v2):
 def mirror_reflections(user_input, df_matrix):
     if HAS_MIRROR:
         try:
-            return _mirror_reflections(user_input, df_matrix)
+            hints = _mirror_reflections(user_input, df_matrix)
+            return _ensure_list(hints), None
         except Exception as e:
             logger.warning(f"mirror reflections failed, using fallback: {e}")
-    # Fallback
     return [
         "Reflect with honesty: what is your true intention?",
         "Consider long-term outcomes over short-term gains.",
@@ -131,7 +151,8 @@ def mirror_reflections(user_input, df_matrix):
 def arjuna_reflections(user_input, df_matrix):
     if HAS_MODES:
         try:
-            return _arjuna_reflections(user_input, df_matrix)
+            hints = _arjuna_reflections(user_input, df_matrix)
+            return _ensure_list(hints)
         except Exception as e:
             logger.warning(f"arjuna reflections failed, using fallback: {e}")
     return [
@@ -140,7 +161,7 @@ def arjuna_reflections(user_input, df_matrix):
         "Courage is clarity in motion; take one dharmic step now."
     ]
 
-# ---------- Core response generator (FIXED) ----------
+# ---------- Core response generator ----------
 def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     """Return (response_markdown, top_verse_row) with robust fallbacks."""
     if not user_input or len(user_input.strip()) < 3:
@@ -150,7 +171,7 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     if df_matrix is None or getattr(df_matrix, 'empty', True):
         return "⚠️ Error: Verse data not loaded. Please check the CSV file.", None
 
-    # Validate columns with leniency: support multiple common schemas
+    # Validate columns
     col_text = None
     for candidate in ["Short English Translation", "English", "Verse", "Translation", "Summary"]:
         if candidate in df_matrix.columns:
@@ -159,7 +180,6 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     if col_text is None:
         return "⚠️ Error: Verse text column not found in matrix.", None
 
-    # Optional columns for display
     col_id = None
     for candidate in ["Verse ID", "ID", "Ref", "Key"]:
         if candidate in df_matrix.columns:
@@ -190,7 +210,7 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
         logger.error(f"Embedding/similarity pipeline failed: {e}")
         return f"⚠️ Error computing similarity: {str(e)}", None
 
-    # Compose response by mode
+    # Compose response
     verse_text = str(top_row[col_text])
     verse_id = str(top_row[col_id]) if col_id else "—"
     verse_tag = str(top_row[col_map]) if col_map else "—"
@@ -209,10 +229,10 @@ Act without attachment to outcomes. Let clarity guide action; align with duty ov
 """
     elif mode == "Arjuna":
         hints = arjuna_reflections(user_input, df_matrix)
-        body = "**Arjuna's Reflection**\n- " + "\n- ".join(hints[:3])
+        body = "**Arjuna's Reflection**\n" + bulletize(hints, max_items=3)
     elif mode in ["Dharma Mirror", "Mirror"]:
         lines, _ = mirror_reflections(user_input, df_matrix)
-        body = "**Dharma Mirror**\n- " + "\n- ".join(lines[:3])
+        body = "**Dharma Mirror**\n" + bulletize(lines, max_items=3)
     elif mode == "Vyasa":
         body = """
 **Vyasa's Narration**  
@@ -220,7 +240,6 @@ You are at a fork: describe the forces, duties, and attachments at play.
 This verse frames the context so duty can be seen without distortion.
 """
     elif mode in ["Technical"]:
-        # Protect against missing columns in the preview
         cols = [c for c in ['similarity', col_id, col_map, col_text] if c and c in top.columns]
         body = f"""
 **Technical Trace**  
@@ -240,18 +259,15 @@ Top-{top_k} matches (similarity):
 if STREAMLIT:
     st.title("🪔 DharmaAI – Minimum Viable Conscience")
 
-    # Initialize session state safely
     if "Usage Journal" not in st.session_state:
         st.session_state["Usage Journal"] = []
 
     st.subheader("Ask a question to GitaBot")
 
-    # If the feature flag is OFF, show a notice and disable inputs
     if not ENABLE_GITABOT:
         st.warning("🔒 GitaBot integration is currently **disabled**. Please check back later.")
         st.stop()
 
-    # ——— GitaBot-enabled UI ———
     available_modes = [
         "Krishna",
         "Krishna-Explains",
@@ -266,7 +282,7 @@ if STREAMLIT:
 
     user_input = st.text_input("Your ethical question or dilemma:", value="")
 
-    # Load verse matrix (robust path + encoding)
+    # Load verse matrix
     matrix_paths = [
         os.path.join(project_root, "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
         os.path.join(project_root, "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
@@ -287,14 +303,9 @@ if STREAMLIT:
                 except Exception as e:
                     logger.error(f"Failed to load {path}: {e}")
     if df_matrix is None:
-        if STREAMLIT:
-            st.error("⚠️ Error: Could not load verse matrix CSV file. Please check the file path.")
-            st.stop()
-        else:
-            logger.error("Could not load verse matrix CSV file.")
-            sys.exit(1)
+        st.error("⚠️ Error: Could not load verse matrix CSV file. Please check the file path.")
+        st.stop()
 
-    # Submit button
     if st.button("🔍 Submit"):
         try:
             response, verse_info = generate_gita_response(mode, df_matrix, user_input)
@@ -305,18 +316,15 @@ if STREAMLIT:
             if response.startswith(("⚠️", "❌", "🛑")):
                 st.error(response)
             else:
-                # Display verse metadata (if available)
                 try:
                     vid = None
                     for c in ["Verse ID", "ID", "Ref", "Key"]:
                         if verse_info is not None and c in verse_info:
-                            vid = verse_info[c]
-                            break
+                            vid = verse_info[c]; break
                     tag = None
                     for c in ["Symbolic Conscience Mapping", "Mapping", "Theme", "Tag"]:
                         if verse_info is not None and c in verse_info:
-                            tag = verse_info[c]
-                            break
+                            tag = verse_info[c]; break
                     if vid or tag:
                         st.markdown(
                             f"<small>📘 Verse: <code>{vid if vid else '—'}</code> — <em>{tag if tag else '—'}</em></small>",
