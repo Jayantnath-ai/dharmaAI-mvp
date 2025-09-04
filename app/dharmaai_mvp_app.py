@@ -227,8 +227,9 @@ _Tag:_ `{verse_tag}`
 Act without attachment to outcomes. Let clarity guide action; align with duty over impulse.  
 **Why this verse?** Your query semantically matched teachings on detachment and right action.
 """
-    elif mode == "Krishna-Explains":
-        body = f"""
+elif mode == "Krishna-Explains":
+    plan = generate_action_plan(user_input, verse_text, verse_tag)
+    body = f"""
 **Krishna's Teaching — Explained**  
 This verse instructs that *right action* is measured by intent and alignment with duty, not by clinging to outcomes.  
 Attachment breeds anxiety and bias; detachment clears the mind to see the dharmic path.
@@ -239,20 +240,15 @@ Attachment breeds anxiety and bias; detachment clears the mind to see the dharmi
 - Let the *work itself* be the offering; accept the result as a consequence, not a prize.
 
 **Action Plan**
+
 **Short Term (today–this week)**  
-- Define the **non-negotiables** you won’t violate (harm boundaries, fairness, consent).  
-- Write a one-sentence **duty statement** for this decision.  
-- Take one **minimal dharmic step** that moves the situation forward without overcommitting.
+{chr(10).join(f"- {s}" for s in plan['short'])}
 
 **Medium Term (next 2–6 weeks)**  
-- Run a **small reversible experiment** aligned with your duty statement; set success/stop criteria.  
-- Establish a **feedback loop** (mentor/peer or stakeholder review) to check for attachment creeping in.  
-- Document trade-offs and **choose the least harmful** policy you can defend transparently.
+{chr(10).join(f"- {m}" for m in plan['medium'])}
 
 **Long Term (quarter and beyond)**  
-- Institutionalize a **detachment routine**: pre-decision reflection + post-decision review (what attached, what detached).  
-- Codify **duty-aligned policies** so the next person can act without personal bias.  
-- Measure **harm reduction / dignity preservation** over raw utility; adjust strategy accordingly.
+{chr(10).join(f"- {l}" for l in plan['long'])}
 """
     elif mode == "Arjuna":
         hints = arjuna_reflections(user_input, df_matrix)
