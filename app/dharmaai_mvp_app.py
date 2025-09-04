@@ -1,10 +1,8 @@
+
 import sys
 import os
-import json
-from datetime import datetime
 from pathlib import Path
 import logging
-import re
 
 # 🔵 Set project root (modify as needed)
 project_root = str(Path(__file__).parent)
@@ -27,6 +25,7 @@ ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "true"
 try:
     import streamlit as st
     STREAMLIT = True
+    st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
 except Exception as e:
     STREAMLIT = False
     st = None
@@ -46,7 +45,7 @@ except Exception as e:
 try:
     from sentence_transformers import SentenceTransformer
     HAS_SBERT = True
-except Exception as e:
+except Exception:
     HAS_SBERT = False
     logger.warning("sentence_transformers not found; Sentence-BERT embeddings unavailable")
 
@@ -54,7 +53,7 @@ except Exception as e:
 try:
     from utils.helpers import get_embedding as _get_embedding, cosine_similarity as _cosine_similarity
     HELPERS = True
-except Exception as e:
+except Exception:
     HELPERS = False
     logger.warning("utils.helpers not found; using fallback get_embedding and cosine_similarity")
 
@@ -62,7 +61,7 @@ except Exception as e:
 try:
     from utils.dharma_mirror_utils import generate_dharma_mirror_reflections as _mirror_reflections
     HAS_MIRROR = True
-except Exception as e:
+except Exception:
     HAS_MIRROR = False
     logger.warning("utils.dharma_mirror_utils not found; using fallback for Dharma Mirror reflections")
 
@@ -70,7 +69,7 @@ except Exception as e:
 try:
     from components.modes import generate_arjuna_reflections as _arjuna_reflections
     HAS_MODES = True
-except Exception as e:
+except Exception:
     HAS_MODES = False
     logger.warning("components.modes not found; using fallback for Arjuna reflections")
 
@@ -144,8 +143,6 @@ def arjuna_reflections(user_input, df_matrix):
 # ---------- Core response generator (FIXED) ----------
 def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     \"\"\"Return (response_markdown, top_verse_row) with robust fallbacks.\"\"\"
-    if not STREAMLIT:
-        logger.error("Streamlit unavailable; cannot render UI.")
     if not user_input or len(user_input.strip()) < 3:
         return "🛑 Please ask a more complete or meaningful question.", None
     if not PANDAS_NUMPY:
@@ -154,4 +151,181 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
         return "⚠️ Error: Verse data not loaded. Please check the CSV file.", None
 
     # Validate columns with leniency: support multiple common schemas
-    # Pr
+    col_text = None
+    for candidate in ["Short English Translation", "English", "Verse", "Translation", "Summary"]:
+        if candidate in df_matrix.columns:
+            col_text = candidate
+            break
+    if col_text is None:
+        return "⚠️ Error: Verse text column not found in matrix.", None
+
+    # Optional columns for display
+    col_id = None
+    for candidate in ["Verse ID", "ID", "Ref", "Key"]:
+        if candidate in df_matrix.columns:
+            col_id = candidate
+            break
+    col_map = None
+    for candidate in ["Symbolic Conscience Mapping", "Mapping", "Theme", "Tag"]:
+        if candidate in df_matrix.columns:
+            col_map = candidate
+            break
+
+    try:
+        if 'embedding' not in df_matrix.columns:
+            df_matrix = df_matrix.copy()
+            df_matrix['embedding'] = df_matrix[col_text].fillna("default").apply(get_embedding)
+
+        query_emb = get_embedding(user_input)
+        if query_emb is None:
+            return "⚠️ Error: Embeddings unavailable.", None
+
+        df_matrix['similarity'] = df_matrix['embedding'].apply(lambda e: cosine_similarity(query_emb, e))
+        if df_matrix['similarity'].isna().all() or df_matrix['similarity'].max() <= 0:
+            return "⚠️ Unable to find a matching verse. Try rephrasing your question.", None
+
+        top = df_matrix.sort_values('similarity', ascending=False).head(top_k)
+        top_row = top.iloc[0]
+    except Exception as e:
+        logger.error(f"Embedding/similarity pipeline failed: {e}")
+        return f"⚠️ Error computing similarity: {str(e)}", None
+
+    # Compose response by mode
+    verse_text = str(top_row[col_text])
+    verse_id = str(top_row[col_id]) if col_id else "—"
+    verse_tag = str(top_row[col_map]) if col_map else "—"
+
+    header = f"""
+**Nearest Verse:** `{verse_id}`  
+*{verse_text}*  
+_Tag:_ `{verse_tag}`
+"""
+
+    if mode in ["Krishna", "Krishna-Explains"]:
+        body = """
+**Krishna's Counsel**  
+Act without attachment to outcomes. Let clarity guide action; align with duty over impulse.  
+**Why this verse?** Your query semantically matched teachings on detachment and right action.
+"""
+    elif mode == "Arjuna":
+        hints = arjuna_reflections(user_input, df_matrix)
+        body = "**Arjuna's Reflection**\n- " + "\n- ".join(hints[:3])
+    elif mode in ["Dharma Mirror", "Mirror"]:
+        lines, _ = mirror_reflections(user_input, df_matrix)
+        body = "**Dharma Mirror**\n- " + "\n- ".join(lines[:3])
+    elif mode == "Vyasa":
+        body = """
+**Vyasa's Narration**  
+You are at a fork: describe the forces, duties, and attachments at play.  
+This verse frames the context so duty can be seen without distortion.
+"""
+    elif mode in ["Technical"]:
+        # Protect against missing columns in the preview
+        cols = [c for c in ['similarity', col_id, col_map, col_text] if c and c in top.columns]
+        body = f"""
+**Technical Trace**  
+Top-{top_k} matches (similarity):  
+{top[cols].to_string(index=False)}
+"""
+    else:
+        body = "Choose dharma; preserve dignity and long-term harmony."
+
+    footer = """
+---
+*Tip:* Refine your question to include people, constraints, and the value you refuse to compromise.
+"""
+    return header + "\n\n" + body + "\n\n" + footer, top_row
+
+# ---------- UI ----------
+if STREAMLIT:
+    st.title("🪔 DharmaAI – Minimum Viable Conscience")
+
+    # Initialize session state safely
+    if "Usage Journal" not in st.session_state:
+        st.session_state["Usage Journal"] = []
+
+    st.subheader("Ask a question to GitaBot")
+
+    # If the feature flag is OFF, show a notice and disable inputs
+    if not ENABLE_GITABOT:
+        st.warning("🔒 GitaBot integration is currently **disabled**. Please check back later.")
+        st.stop()
+
+    # ——— GitaBot-enabled UI ———
+    available_modes = [
+        "Krishna",
+        "Krishna-Explains",
+        "Arjuna",
+        "Dharma Mirror",
+        "Vyasa",
+        "Technical",
+        "Karmic Entanglement Simulator",
+        "Forked Fate Contemplation"
+    ]
+    mode = st.sidebar.radio("Select Mode", available_modes)
+
+    user_input = st.text_input("Your ethical question or dilemma:", value="")
+
+    # Load verse matrix (robust path + encoding)
+    matrix_paths = [
+        os.path.join(project_root, "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
+        os.path.join(project_root, "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
+        os.path.join(project_root, "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv")
+    ]
+    df_matrix = None
+    if PANDAS_NUMPY:
+        for path in matrix_paths:
+            if os.path.exists(path):
+                try:
+                    df_matrix = pd.read_csv(path, encoding='utf-8')
+                    logger.info(f"Loaded verse matrix from {path}")
+                    break
+                except UnicodeDecodeError:
+                    df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
+                    logger.info(f"Loaded verse matrix from {path} with ISO-8859-1 encoding")
+                    break
+                except Exception as e:
+                    logger.error(f"Failed to load {path}: {e}")
+    if df_matrix is None:
+        if STREAMLIT:
+            st.error("⚠️ Error: Could not load verse matrix CSV file. Please check the file path.")
+            st.stop()
+        else:
+            logger.error("Could not load verse matrix CSV file.")
+            sys.exit(1)
+
+    # Submit button
+    if st.button("🔍 Submit"):
+        try:
+            response, verse_info = generate_gita_response(mode, df_matrix, user_input)
+            st.markdown(
+                "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
+                unsafe_allow_html=True
+            )
+            if response.startswith(("⚠️", "❌", "🛑")):
+                st.error(response)
+            else:
+                # Display verse metadata (if available)
+                try:
+                    vid = None
+                    for c in ["Verse ID", "ID", "Ref", "Key"]:
+                        if verse_info is not None and c in verse_info:
+                            vid = verse_info[c]
+                            break
+                    tag = None
+                    for c in ["Symbolic Conscience Mapping", "Mapping", "Theme", "Tag"]:
+                        if verse_info is not None and c in verse_info:
+                            tag = verse_info[c]
+                            break
+                    if vid or tag:
+                        st.markdown(
+                            f"<small>📘 Verse: <code>{vid if vid else '—'}</code> — <em>{tag if tag else '—'}</em></small>",
+                            unsafe_allow_html=True
+                        )
+                except Exception:
+                    pass
+                st.markdown(response, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        except Exception as e:
+            logger.error(f"Streamlit UI error: {e}")
+            st.error(f"⚠️ Unexpected error: {e}")
