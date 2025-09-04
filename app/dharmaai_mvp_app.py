@@ -1,7 +1,7 @@
 import sys
 import os
-from pathlib import Path
 import logging
+from pathlib import Path
 
 # 🔵 Set project root (modify as needed)
 project_root = str(Path(__file__).parent)
@@ -72,7 +72,7 @@ except Exception:
     HAS_MODES = False
     logger.warning("components.modes not found; using fallback for Arjuna reflections")
 
-# ---------- Utility helpers (PATCH) ----------
+# ---------- Utility helpers ----------
 def _ensure_list(x):
     """Return x as a list; unwrap (list, meta) tuples; wrap singletons."""
     if x is None:
@@ -93,203 +93,6 @@ def bulletize(items, max_items=3):
             itm = str(itm)
         out.append(f"- {itm}")
     return "\n".join(out) if out else "- (no reflections)"
-
-def generate_action_plan(user_input: str, verse_text: str, verse_tag: str | None):
-    """
-    Build a short/medium/long-term plan that adapts to the teaching (via verse_tag)
-    and the user's context (via user_input keywords). No external models required.
-    """
-    tag = (verse_tag or "").lower()
-
-    # Lightweight intent signals from the user's text
-    text = (user_input or "").lower()
-    wants_speed     = any(k in text for k in ["urgent", "deadline", "now", "today", "asap"])
-    high_uncert     = any(k in text for k in ["uncertain", "unknown", "ambiguous", "confused"])
-    conflict_people = any(k in text for k in ["team", "stake", "manager", "customer", "family", "partner"])
-    risk_words      = any(k in text for k in ["risk", "harm", "unsafe", "privacy", "bias", "security"])
-
-    # Map common Gita themes/tags to strategy knobs
-    # (You can expand these keys to match your CSV’s "Symbolic Conscience Mapping" values)
-    archetypes = {
-        "detachment": {
-            "short": [
-                "Write a one-sentence duty statement for this decision.",
-                "List top 3 attachments (fears/desires) influencing you; mark each as 'signal' or 'noise'.",
-                "Take one reversible step that aligns with duty, not outcome anxiety.",
-            ],
-            "medium": [
-                "Run a limited-scope experiment with clear success/stop criteria.",
-                "Create a peer review checkpoint to check for creeping attachment.",
-                "Document trade-offs; prefer options that preserve dignity over raw utility.",
-            ],
-            "long": [
-                "Institutionalize pre-/post-decision detachment reviews.",
-                "Codify a duty-aligned policy so successors avoid personal bias.",
-                "Track harm-reduction and fairness metrics alongside outcomes.",
-            ],
-        },
-        "duty": {
-            "short": [
-                "Clarify role-specific obligations and constraints in one paragraph.",
-                "Identify one action you can perform today that fulfills duty without overreach.",
-                "State who benefits and who bears cost; avoid shifting duty without consent.",
-            ],
-            "medium": [
-                "Sequence obligations; commit to milestones with owners and dates.",
-                "Create a conflict-of-duties escalation path with documented criteria.",
-                "Establish periodic alignment with stakeholders on duty scope.",
-            ],
-            "long": [
-                "Publish a duty charter for recurring situations.",
-                "Design role handoffs and cross-checks to prevent duty drift.",
-                "Review duty scope quarterly against outcomes and harms.",
-            ],
-        },
-        "compassion": {
-            "short": [
-                "Name affected groups; add one safeguard for the most vulnerable.",
-                "Rewrite the decision in language a harmed party would find respectful.",
-                "Pause any step that creates avoidable harm; propose a gentler variant.",
-            ],
-            "medium": [
-                "Pilot with opt-in and a clear exit path; include grievance capture.",
-                "Add bias/impact checks to the review ritual.",
-                "Co-design mitigations with a representative of the impacted group.",
-            ],
-            "long": [
-                "Adopt a standing dignity guideline (non-negotiables).",
-                "Fund a remediation pathway for foreseeable harms.",
-                "Track distributional effects, not just averages.",
-            ],
-        },
-        "truth": {
-            "short": [
-                "State the decision and rationale plainly; remove spin and euphemisms.",
-                "List unknowns and how you’ll reduce them (one concrete probe).",
-                "Disclose material conflicts and limits to competence.",
-            ],
-            "medium": [
-                "Set a cadence for publishing updates and postmortems.",
-                "Introduce 'challenge rounds' where dissent is rewarded.",
-                "Tie incentives to accuracy and candor, not just success.",
-            ],
-            "long": [
-                "Institutionalize public reasoning memos for major calls.",
-                "Create a red-team/blue-team rotation.",
-                "Maintain an errors register with repairs and learnings.",
-            ],
-        },
-        "equality": {
-            "short": [
-                "Check access and eligibility criteria for hidden exclusions.",
-                "Run a quick counterfactual: would I accept this if roles were swapped?",
-                "Invite at least one voice unlike yours to review the draft decision.",
-            ],
-            "medium": [
-                "Add audit fields for who benefits and who is burdened.",
-                "Pilot with diverse participants and compare outcomes.",
-                "Adjust thresholds or defaults to reduce disparate harms.",
-            ],
-            "long": [
-                "Adopt equity metrics with alert thresholds.",
-                "Budget to support inclusion (language, accessibility, time zones).",
-                "Publish representation and impact dashboards.",
-            ],
-        },
-        "self-control": {
-            "short": [
-                "Name your strongest impulse; delay action 24 hours if stakes are high.",
-                "Replace venting with a structured note of facts, feelings, needs, request.",
-                "Do a 3-minute breath or walk before reply.",
-            ],
-            "medium": [
-                "Create triggers and counters (if-then plans) for known impulses.",
-                "Add a 'cooling-off' lane in the workflow for heated decisions.",
-                "Pair with a calm reviewer on high-stakes comms.",
-            ],
-            "long": [
-                "Train attention practices (daily).",
-                "Reshape incentives that reward speed over care.",
-                "Rotate responsibilities to prevent depletion.",
-            ],
-        },
-        "impermanence": {
-            "short": [
-                "Separate reversible vs irreversible parts; act on reversible first.",
-                "Document what would make you change your mind.",
-                "Prefer rentals/trials over purchases/lock-in this week.",
-            ],
-            "medium": [
-                "Stage commitments; add gates where you can re-evaluate.",
-                "Record decision timestamps and sunset/review dates.",
-                "Keep alternative vendors/options warm.",
-            ],
-            "long": [
-                "Favor modular designs and contracts with exit ramps.",
-                "Budget time for periodic strategy rewrites.",
-                "Audit lock-ins yearly.",
-            ],
-        },
-    }
-
-    # Pick an archetype by tag heuristics
-    if "detach" in tag or "renunciation" in tag or "karma-phala" in tag:
-        base = archetypes["detachment"]
-    elif "duty" in tag or "role" in tag:
-        base = archetypes["duty"]
-    elif "compassion" in tag or "ahimsa" in tag:
-        base = archetypes["compassion"]
-    elif "truth" in tag or "satya" in tag:
-        base = archetypes["truth"]
-    elif "equal" in tag or "samadarsh" in tag:
-        base = archetypes["equality"]
-    elif "self" in tag or "control" in tag or "discipline" in tag:
-        base = archetypes["self-control"]
-    elif "time" in tag or "impermanence" in tag or "entropy" in tag:
-        base = archetypes["impermanence"]
-    else:
-        # generic default
-        base = {
-            "short": [
-                "Clarify your duty and one non-negotiable boundary.",
-                "Take one reversible step aligned with duty.",
-                "Write what you will measure (harm + dignity + utility).",
-            ],
-            "medium": [
-                "Pilot with review checkpoints and a stop rule.",
-                "Invite a counter-perspective to reduce bias.",
-                "Document trade-offs and communicate them plainly.",
-            ],
-            "long": [
-                "Create a recurring review ritual (pre/post decision).",
-                "Codify policy so it survives handoffs.",
-                "Track harm reduction and fairness, not just outcomes.",
-            ],
-        }
-
-    # Contextual nudges derived from the question
-    short = list(base["short"])
-    medium = list(base["medium"])
-    long = list(base["long"])
-
-    if wants_speed:
-        short.insert(0, "Time-box analysis to 30–60 minutes; act on the least-regret step.")
-    if high_uncert:
-        short.append("Add one probe to shrink uncertainty before committing.")
-        medium.insert(0, "Structure unknowns: list hypotheses and the tests to resolve them.")
-    if conflict_people:
-        short.append("Identify key stakeholders and schedule a 15-minute alignment call.")
-        medium.append("Define decision rights (who recommends/decides/informs).")
-    if risk_words:
-        short.insert(0, "Run a quick harm scan: privacy, safety, bias, security.")
-        medium.append("Add a mitigation owner for the top risk.")
-
-    return {
-        "short": short[:5],   # keep lists tight
-        "medium": medium[:5],
-        "long": long[:5],
-    }
-
 
 # ---------- Fallback utilities ----------
 def _fallback_embedding(text: str):
@@ -358,6 +161,103 @@ def arjuna_reflections(user_input, df_matrix):
         "Courage is clarity in motion; take one dharmic step now."
     ]
 
+# ---------- Signals & dynamic action plan ----------
+def extract_signals(text: str) -> dict:
+    t = (text or "").lower()
+    return {
+        "urgency": any(k in t for k in ["urgent","deadline","now","asap","today","tonight"]),
+        "uncertainty": any(k in t for k in ["uncertain","unknown","ambiguous","confused","unsure"]),
+        "stakeholder_conflict": any(k in t for k in ["team","manager","customer","family","partner","board","stakeholder","investor"]),
+        "risk_words": any(k in t for k in ["risk","harm","unsafe","privacy","bias","security","safety","breach"]),
+        "domain": "work" if any(k in t for k in ["product","ship","release","kpi","roadmap","sprint","contract"]) else \
+                  "family" if any(k in t for k in ["family","parent","child","spouse","partner"]) else "general",
+    }
+
+# Load YAML templates (with fallback if missing)
+ACTION_TEMPLATES = None
+try:
+    import yaml
+    from yaml import SafeLoader
+    tmpl_path = Path(project_root) / "action_templates.yaml"
+    if tmpl_path.exists():
+        ACTION_TEMPLATES = yaml.safe_load(tmpl_path.read_text(encoding="utf-8"))
+    else:
+        ACTION_TEMPLATES = {}  # fallback
+except Exception as e:
+    logger.warning(f"YAML not available or failed to load: {e}")
+    ACTION_TEMPLATES = {}
+
+def _tmpl_for_tag(tag: str) -> dict:
+    tag = (tag or "").lower()
+    def get(name): return ACTION_TEMPLATES.get(name, {})
+    if "detach" in tag or "karma" in tag:
+        return get("detachment")
+    if "duty" in tag or "role" in tag:
+        return get("duty")
+    if "compassion" in tag or "ahimsa" in tag:
+        return get("compassion")
+    if "truth" in tag or "satya" in tag:
+        return get("truth")
+    if "equal" in tag or "sama" in tag:
+        return get("equality")
+    if "self" in tag or "control" in tag or "discipline" in tag:
+        return get("self-control")
+    if "impermanence" in tag or "time" in tag or "entropy" in tag:
+        return get("impermanence")
+    return get("detachment") or get("duty") or {}
+
+def _select_steps(pool, signals, k):
+    if not isinstance(pool, list):
+        return []
+    scored = []
+    for item in pool:
+        step = item.get("step") if isinstance(item, dict) else str(item)
+        tags = [t.lower() for t in (item.get("tags", []) if isinstance(item, dict) else [])]
+        s = 1.0
+        if signals["urgency"] and any(t in tags for t in ["time","reversibility","minimal-step"]): s += 0.4
+        if signals["uncertainty"] and any(t in tags for t in ["experiment","uncertainty","probe"]): s += 0.4
+        if signals["stakeholder_conflict"] and any(t in tags for t in ["stakeholders","decision-rights","alignment"]): s += 0.35
+        if signals["risk_words"] and any(t in tags for t in ["risk","privacy","bias","security","safety","harm"]): s += 0.45
+        scored.append((s, step))
+    scored.sort(reverse=True, key=lambda x: x[0])
+    top = [s for _, s in scored[:max(1, k)]]
+    if len(top) > 1:
+        import random
+        rnd = random.Random(hash("::".join(top)) & 0xFFFFFFFF)
+        rest = top[1:]
+        rnd.shuffle(rest)
+        top = [top[0]] + rest
+    return top
+
+def generate_action_plan_dynamic(user_input: str, verse_tag: str | None, sizes=(3,3,3)) -> dict:
+    signals = extract_signals(user_input)
+    tmpl = _tmpl_for_tag(verse_tag)
+    short_pool = tmpl.get("short", [])
+    med_pool   = tmpl.get("medium", [])
+    long_pool  = tmpl.get("long", [])
+    short = _select_steps(short_pool, signals, sizes[0]) if short_pool else []
+    med   = _select_steps(med_pool,   signals, sizes[1]) if med_pool   else []
+    long  = _select_steps(long_pool,  signals, sizes[2]) if long_pool  else []
+    if signals["risk_words"] and not any("harm" in s.lower() or "privacy" in s.lower() for s in short + med):
+        short = ["Run a quick harm scan: privacy, safety, bias, security."] + short
+    if not (short or med or long):
+        short = [
+            "Clarify your duty and one non-negotiable boundary.",
+            "Take one reversible step aligned with duty.",
+            "Write what you will measure (harm + dignity + utility).",
+        ]
+        med = [
+            "Pilot with review checkpoints and a stop rule.",
+            "Invite a counter-perspective to reduce bias.",
+            "Document trade-offs and communicate them plainly.",
+        ]
+        long = [
+            "Create a recurring review ritual (pre/post decision).",
+            "Codify policy so it survives handoffs.",
+            "Track harm reduction and fairness, not just outcomes.",
+        ]
+    return {"short": short[:5], "medium": med[:5], "long": long[:5]}
+
 # ---------- Core response generator ----------
 def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     """Return (response_markdown, top_verse_row) with robust fallbacks."""
@@ -368,7 +268,6 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     if df_matrix is None or getattr(df_matrix, 'empty', True):
         return "⚠️ Error: Verse data not loaded. Please check the CSV file.", None
 
-    # Validate columns
     col_text = None
     for candidate in ["Short English Translation", "English", "Verse", "Translation", "Summary"]:
         if candidate in df_matrix.columns:
@@ -407,7 +306,6 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
         logger.error(f"Embedding/similarity pipeline failed: {e}")
         return f"⚠️ Error computing similarity: {str(e)}", None
 
-    # Compose response
     verse_text = str(top_row[col_text])
     verse_id = str(top_row[col_id]) if col_id else "—"
     verse_tag = str(top_row[col_map]) if col_map else "—"
@@ -425,16 +323,11 @@ Act without attachment to outcomes. Let clarity guide action; align with duty ov
 **Why this verse?** Your query semantically matched teachings on detachment and right action.
 """
     elif mode == "Krishna-Explains":
-    	plan = generate_action_plan(user_input, verse_text, verse_tag)
-    	body = f"""
+        plan = generate_action_plan_dynamic(user_input, verse_tag)
+        body = f"""
 **Krishna's Teaching — Explained**  
 This verse instructs that *right action* is measured by intent and alignment with duty, not by clinging to outcomes.  
 Attachment breeds anxiety and bias; detachment clears the mind to see the dharmic path.
-
-**How it applies to your case**  
-- Your question suggests competing pulls (duty vs. preference).  
-- Detach from personal gain and fear of loss; evaluate which action sustains long-term harmony.  
-- Let the *work itself* be the offering; accept the result as a consequence, not a prize.
 
 **Action Plan**
 

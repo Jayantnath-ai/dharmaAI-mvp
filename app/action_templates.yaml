@@ -1,0 +1,161 @@
+# action_templates.yaml — editable library of action steps by virtue tag
+detachment:
+  short:
+    - step: "Write a one-sentence duty statement for this decision."
+      tags: ["duty","framing"]
+    - step: "List top 3 attachments (fear/desire); mark signal vs noise."
+      tags: ["self-awareness"]
+    - step: "Take one reversible step aligned with duty."
+      tags: ["reversibility","minimal-step","time"]
+  medium:
+    - step: "Run a limited-scope experiment with success/stop criteria."
+      tags: ["experiment","uncertainty"]
+    - step: "Add a peer review to check attachment creep."
+      tags: ["stakeholders","alignment"]
+    - step: "Document trade-offs; prefer options that preserve dignity over raw utility."
+      tags: ["dignity","fairness"]
+  long:
+    - step: "Institutionalize pre-/post-decision detachment reviews."
+      tags: ["ritual"]
+    - step: "Codify duty-aligned policy for successors."
+      tags: ["policy"]
+    - step: "Track harm-reduction and fairness metrics alongside outcomes."
+      tags: ["fairness","metrics"]
+
+duty:
+  short:
+    - step: "Clarify role obligations and constraints in one paragraph."
+      tags: ["duty","framing"]
+    - step: "Identify one action today that fulfills duty without overreach."
+      tags: ["minimal-step","reversibility"]
+    - step: "State who benefits and who bears cost; avoid shifting duty without consent."
+      tags: ["fairness","consent"]
+  medium:
+    - step: "Sequence obligations; commit to milestones with owners and dates."
+      tags: ["planning","accountability"]
+    - step: "Create a conflict-of-duties escalation path with documented criteria."
+      tags: ["escalation","decision-rights"]
+    - step: "Establish periodic alignment with stakeholders on duty scope."
+      tags: ["stakeholders","alignment"]
+  long:
+    - step: "Publish a duty charter for recurring situations."
+      tags: ["policy"]
+    - step: "Design role handoffs and cross-checks to prevent duty drift."
+      tags: ["process","resilience"]
+    - step: "Review duty scope quarterly against outcomes and harms."
+      tags: ["metrics","review"]
+
+compassion:
+  short:
+    - step: "Name affected groups; add one safeguard for the most vulnerable."
+      tags: ["harm","vulnerable"]
+    - step: "Rewrite the decision in language a harmed party would find respectful."
+      tags: ["communication","respect"]
+    - step: "Pause any step that creates avoidable harm; propose a gentler variant."
+      tags: ["harm","mitigation"]
+  medium:
+    - step: "Pilot with opt-in and a clear exit path; include grievance capture."
+      tags: ["consent","grievance","pilot"]
+    - step: "Add bias/impact checks to the review ritual."
+      tags: ["bias","impact"]
+    - step: "Co-design mitigations with a representative of the impacted group."
+      tags: ["participation","stakeholders"]
+  long:
+    - step: "Adopt a standing dignity guideline (non-negotiables)."
+      tags: ["policy","dignity"]
+    - step: "Fund a remediation pathway for foreseeable harms."
+      tags: ["remediation","budget"]
+    - step: "Track distributional effects, not just averages."
+      tags: ["fairness","metrics"]
+
+truth:
+  short:
+    - step: "State the decision and rationale plainly; remove spin and euphemisms."
+      tags: ["candor"]
+    - step: "List unknowns and how you’ll reduce them (one concrete probe)."
+      tags: ["uncertainty","probe"]
+    - step: "Disclose material conflicts and limits to competence."
+      tags: ["conflict","integrity"]
+  medium:
+    - step: "Set a cadence for publishing updates and postmortems."
+      tags: ["transparency","ritual"]
+    - step: "Introduce 'challenge rounds' where dissent is rewarded."
+      tags: ["dissent","quality"]
+    - step: "Tie incentives to accuracy and candor, not just success."
+      tags: ["incentives","candor"]
+  long:
+    - step: "Institutionalize public reasoning memos for major calls."
+      tags: ["transparency","policy"]
+    - step: "Create a red-team/blue-team rotation."
+      tags: ["red-team","quality"]
+    - step: "Maintain an errors register with repairs and learnings."
+      tags: ["learning","quality"]
+
+equality:
+  short:
+    - step: "Check access and eligibility criteria for hidden exclusions."
+      tags: ["equity","access"]
+    - step: "Run a quick counterfactual: would I accept this if roles were swapped?"
+      tags: ["empathy","fairness"]
+    - step: "Invite at least one voice unlike yours to review the draft decision."
+      tags: ["diversity","stakeholders"]
+  medium:
+    - step: "Add audit fields for who benefits and who is burdened."
+      tags: ["audit","equity"]
+    - step: "Pilot with diverse participants and compare outcomes."
+      tags: ["pilot","metrics"]
+    - step: "Adjust thresholds or defaults to reduce disparate harms."
+      tags: ["mitigation","fairness"]
+  long:
+    - step: "Adopt equity metrics with alert thresholds."
+      tags: ["metrics","equity"]
+    - step: "Budget to support inclusion (language, accessibility, time zones)."
+      tags: ["budget","access"]
+    - step: "Publish representation and impact dashboards."
+      tags: ["transparency","metrics"]
+
+self-control:
+  short:
+    - step: "Name your strongest impulse; delay action 24 hours if stakes are high."
+      tags: ["impulse","cooling"]
+    - step: "Replace venting with a structured note of facts, feelings, needs, request."
+      tags: ["communication","self-awareness"]
+    - step: "Do a 3-minute breath or walk before reply."
+      tags: ["regulation","health"]
+  medium:
+    - step: "Create triggers and counters (if-then plans) for known impulses."
+      tags: ["plan","regulation"]
+    - step: "Add a 'cooling-off' lane for heated decisions."
+      tags: ["process","cooling"]
+    - step: "Pair with a calm reviewer on high-stakes comms."
+      tags: ["stakeholders","quality"]
+  long:
+    - step: "Train attention practices (daily)."
+      tags: ["training","health"]
+    - step: "Reshape incentives that reward speed over care."
+      tags: ["incentives","culture"]
+    - step: "Rotate responsibilities to prevent depletion."
+      tags: ["resilience","process"]
+
+impermanence:
+  short:
+    - step: "Separate reversible vs irreversible parts; act on reversible first."
+      tags: ["reversibility","time"]
+    - step: "Document what would make you change your mind."
+      tags: ["uncertainty","criteria"]
+    - step: "Prefer rentals/trials over purchases/lock-in this week."
+      tags: ["reversibility","risk"]
+  medium:
+    - step: "Stage commitments; add gates where you can re-evaluate."
+      tags: ["stage","gates"]
+    - step: "Record decision timestamps and sunset/review dates."
+      tags: ["sunset","review"]
+    - step: "Keep alternative vendors/options warm."
+      tags: ["optionality","resilience"]
+  long:
+    - step: "Favor modular designs and contracts with exit ramps."
+      tags: ["architecture","contracts"]
+    - step: "Budget time for periodic strategy rewrites."
+      tags: ["strategy","time"]
+    - step: "Audit lock-ins yearly."
+      tags: ["audit","risk"]
