@@ -227,7 +227,7 @@ _Tag:_ `{verse_tag}`
 Act without attachment to outcomes. Let clarity guide action; align with duty over impulse.  
 **Why this verse?** Your query semantically matched teachings on detachment and right action.
 """
-elif mode == "Krishna-Explains":
+    elif mode == "Krishna-Explains":
     plan = generate_action_plan(user_input, verse_text, verse_tag)
     body = f"""
 **Krishna's Teaching — Explained**  
