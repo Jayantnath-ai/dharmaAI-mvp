@@ -142,7 +142,7 @@ def arjuna_reflections(user_input, df_matrix):
 
 # ---------- Core response generator (FIXED) ----------
 def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
-    \"\"\"Return (response_markdown, top_verse_row) with robust fallbacks.\"\"\"
+    """Return (response_markdown, top_verse_row) with robust fallbacks."""
     if not user_input or len(user_input.strip()) < 3:
         return "🛑 Please ask a more complete or meaningful question.", None
     if not PANDAS_NUMPY:
