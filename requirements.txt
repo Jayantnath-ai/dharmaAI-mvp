@@ -2,18 +2,19 @@ streamlit>=1.34
 pyyaml>=6.0.1
 pandas>=2.0
 numpy>=1.24
-sentence-transformers>=2.7  # optional; app falls back if missing
 pyarrow
-openai>=1.1.0
 requests
-google-generativeai>=0.3.2
 scikit-learn>=1.2
+
+# openai>=1.1.0
+# google-generativeai>=0.3.2
 
 
 # Optional for SBERT embeddings (faster/better semantics):
-sentence-transformers>=2.2
-torch>=2.1 ; sys_platform != "darwin" or platform_machine != "arm64"
-torch>=2.1 ; sys_platform == "darwin" and platform_machine == "arm64"
+# sentence-transformers>=2.2
+# sentence-transformers>=2.7  # optional; app falls back if missing
+# torch>=2.1 ; sys_platform != "darwin" or platform_machine != "arm64"
+# torch>=2.1 ; sys_platform == "darwin" and platform_machine == "arm64"
 
 # Dev (recommended):
 black>=24.3
