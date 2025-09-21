@@ -1,6 +1,3 @@
-# dharmaai_mvp_app.py
-# ✅ Updated for dynamic, context-relevant responses
-
 import sys
 import os
 import logging
@@ -43,7 +40,7 @@ except Exception:
     PANDAS_NUMPY = False
     logger.error("pandas/numpy not available.")
 
-# Sentence-BERT (optional)
+# Embeddings support (optional)
 try:
     from sentence_transformers import SentenceTransformer
     HAS_SBERT = True
@@ -77,6 +74,7 @@ except Exception:
 
 # ---------- Utility helpers ----------
 def _ensure_list(x):
+    """Return x as a list; unwrap (list, meta) tuples; wrap singletons."""
     if x is None:
         return []
     if isinstance(x, tuple) and len(x) >= 1:
@@ -86,6 +84,7 @@ def _ensure_list(x):
     return [x]
 
 def bulletize(items, max_items=3):
+    """Flatten one level & coerce to str so join() never fails."""
     out = []
     for itm in _ensure_list(items)[:max_items]:
         if isinstance(itm, (list, tuple)):
@@ -95,9 +94,8 @@ def bulletize(items, max_items=3):
         out.append(f"- {itm}")
     return "\n".join(out) if out else "- (no reflections)"
 
-# ---------- Embedding & Similarity Fallbacks ----------
+# ---------- Fallback utilities ----------
 def _fallback_embedding(text: str):
-    """Stable random embedding as last resort."""
     if not PANDAS_NUMPY:
         return None
     if not text or not isinstance(text, str):
@@ -120,6 +118,7 @@ def _fallback_cosine(a, b):
         return 0.0
     return float(np.dot(a, b) / (na * nb))
 
+# Public wrappers
 def get_embedding(text):
     if HELPERS:
         try:
@@ -136,39 +135,6 @@ def cosine_similarity(v1, v2):
             logger.warning(f"helper.cosine_similarity failed, using fallback: {e}")
     return _fallback_cosine(v1, v2)
 
-# ---------- TF-IDF Fallback (content-aware, no external services) ----------
-_TFIDF = None
-_TFIDF_VECS = None
-_TFIDF_COL = None
-_HAS_SKLEARN = True
-try:
-    from sklearn.feature_extraction.text import TfidfVectorizer
-except Exception:
-    _HAS_SKLEARN = False
-    logger.warning("scikit-learn not available; TF-IDF fallback disabled")
-
-def _ensure_tfidf(df_matrix, col_text):
-    global _TFIDF, _TFIDF_VECS, _TFIDF_COL
-    if not _HAS_SKLEARN:
-        return
-    if _TFIDF is not None and _TFIDF_COL == col_text:
-        return
-    texts = df_matrix[col_text].fillna("").astype(str).tolist()
-    _TFIDF = TfidfVectorizer(ngram_range=(1,2), min_df=1, max_features=20000)
-    _TFIDF_VECS = _TFIDF.fit_transform(texts)
-    _TFIDF_COL = col_text
-
-def _tfidf_rank(df_matrix, col_text, query, top_k=3):
-    if not _HAS_SKLEARN:
-        return None
-    _ensure_tfidf(df_matrix, col_text)
-    qv = _TFIDF.transform([query or ""])
-    sims = (_TFIDF_VECS @ qv.T).toarray().ravel()
-    df = df_matrix.copy()
-    df["similarity_tfidf"] = sims
-    return df.sort_values("similarity_tfidf", ascending=False).head(top_k)
-
-# ---------- Mirror & Arjuna ----------
 def mirror_reflections(user_input, df_matrix):
     if HAS_MIRROR:
         try:
@@ -195,26 +161,17 @@ def arjuna_reflections(user_input, df_matrix):
         "Courage is clarity in motion; take one dharmic step now."
     ]
 
-# ---------- Signals, Tagging & Action Plans ----------
+# ---------- Signals & dynamic action plan ----------
 def extract_signals(text: str) -> dict:
     t = (text or "").lower()
     return {
         "urgency": any(k in t for k in ["urgent","deadline","now","asap","today","tonight"]),
         "uncertainty": any(k in t for k in ["uncertain","unknown","ambiguous","confused","unsure"]),
-        "stakeholder_conflict": any(k in t for k in ["team","manager","customer","family","partner","board","stakeholder","investor","client","legal","compliance"]),
-        "risk_words": any(k in t for k in ["risk","harm","unsafe","privacy","bias","security","safety","breach","fraud"]),
-        "domain": "work" if any(k in t for k in ["product","ship","release","kpi","roadmap","sprint","contract","vendor","procure","pilot","market"]) else \
+        "stakeholder_conflict": any(k in t for k in ["team","manager","customer","family","partner","board","stakeholder","investor"]),
+        "risk_words": any(k in t for k in ["risk","harm","unsafe","privacy","bias","security","safety","breach"]),
+        "domain": "work" if any(k in t for k in ["product","ship","release","kpi","roadmap","sprint","contract"]) else \
                   "family" if any(k in t for k in ["family","parent","child","spouse","partner"]) else "general",
     }
-
-def _synthesize_tag(text):
-    t = (text or "").lower()
-    if any(k in t for k in ["duty","role","obligation","responsibility"]): return "duty"
-    if any(k in t for k in ["harm","violence","ahimsa","compassion","kindness"]): return "compassion"
-    if any(k in t for k in ["truth","honest","transparency","satya"]): return "truth"
-    if any(k in t for k in ["discipline","self","control","temperance"]): return "self-control"
-    if any(k in t for k in ["impermanence","change","time","entropy"]): return "impermanence"
-    return "detachment"
 
 # Load YAML templates (with fallback if missing)
 ACTION_TEMPLATES = None
@@ -225,103 +182,28 @@ try:
     if tmpl_path.exists():
         ACTION_TEMPLATES = yaml.safe_load(tmpl_path.read_text(encoding="utf-8"))
     else:
-        ACTION_TEMPLATES = {}
+        ACTION_TEMPLATES = {}  # fallback
 except Exception as e:
     logger.warning(f"YAML not available or failed to load: {e}")
     ACTION_TEMPLATES = {}
 
-# Built-in defaults to guarantee plans
-if not ACTION_TEMPLATES:
-    ACTION_TEMPLATES = {
-        "detachment": {
-            "short": [
-                {"step":"Write the duty in one sentence; remove outcome words.","tags":["truth","minimal-step"]},
-                {"step":"Take one reversible step today.","tags":["time","reversibility"]},
-                {"step":"Name the attachment you’ll drop (status, speed, approval).","tags":["self-control"]}
-            ],
-            "medium": [
-                {"step":"Set checkpoints and stop-rules.","tags":["risk"]},
-                {"step":"Publish success & harm criteria.","tags":["truth","risk"]}
-            ],
-            "long": [
-                {"step":"Codify the policy so it survives handoffs.","tags":["truth"]},
-                {"step":"Schedule a quarterly bias audit.","tags":["bias","risk"]}
-            ]
-        },
-        "duty": {
-            "short": [
-                {"step":"Define who has decision rights.","tags":["stakeholders","decision-rights","alignment"]},
-                {"step":"Clarify non-negotiable boundary.","tags":["truth"]},
-                {"step":"Commit to one dharmic action within 24h.","tags":["time"]}
-            ],
-            "medium":[
-                {"step":"Share trade-offs with stakeholders.","tags":["truth","stakeholders"]},
-                {"step":"Pilot with a reversible experiment.","tags":["experiment","reversibility"]}
-            ],
-            "long":[
-                {"step":"Establish a recurring governance review.","tags":["risk","stakeholders"]}
-            ]
-        },
-        "compassion": {
-            "short":[
-                {"step":"List affected parties & harms.","tags":["risk","harm","stakeholders"]},
-                {"step":"Choose the path that reduces harm first.","tags":["non-malice","risk"]}
-            ],
-            "medium":[
-                {"step":"Add a dignity check in approvals.","tags":["stakeholders","truth"]}
-            ],
-            "long":[
-                {"step":"Track harm-reduction metrics alongside KPIs.","tags":["risk"]}
-            ]
-        },
-        "truth": {
-            "short":[
-                {"step":"Expose the uncertain assumption.","tags":["truth","uncertainty"]},
-                {"step":"Seek a disconfirming perspective.","tags":["bias"]}
-            ],
-            "medium":[
-                {"step":"Write a one-page decision log.","tags":["truth"]}
-            ],
-            "long":[
-                {"step":"Make transparency the default policy.","tags":["truth"]}
-            ]
-        },
-        "self-control": {
-            "short":[
-                {"step":"Insert a pause: 10 breaths before reply.","tags":["self-control"]},
-                {"step":"Timebox the decision; avoid doom-scrolling.","tags":["time","discipline"]}
-            ],
-            "medium":[
-                {"step":"Create triggers for calm escalation.","tags":["discipline"]}
-            ],
-            "long":[
-                {"step":"Practice a weekly detachment ritual.","tags":["discipline"]}
-            ]
-        },
-        "impermanence": {
-            "short":[
-                {"step":"Separate transient noise from signal.","tags":["uncertainty"]},
-                {"step":"Favor options that keep future flexibility.","tags":["reversibility"]}
-            ],
-            "medium":[
-                {"step":"Stage commitments by learning milestones.","tags":["experiment"]}
-            ],
-            "long":[
-                {"step":"Institutionalize sunset reviews.","tags":["risk"]}
-            ]
-        }
-    }
-
 def _tmpl_for_tag(tag: str) -> dict:
     tag = (tag or "").lower()
     def get(name): return ACTION_TEMPLATES.get(name, {})
-    if "detach" in tag or "karma" in tag:   return get("detachment")
-    if "duty" in tag or "role" in tag:      return get("duty")
-    if "compassion" in tag or "ahimsa" in tag: return get("compassion")
-    if "truth" in tag or "satya" in tag:    return get("truth")
-    if "equal" in tag or "sama" in tag:     return get("truth")
-    if "self" in tag or "control" in tag or "discipline" in tag: return get("self-control")
-    if "impermanence" in tag or "time" in tag or "entropy" in tag: return get("impermanence")
+    if "detach" in tag or "karma" in tag:
+        return get("detachment")
+    if "duty" in tag or "role" in tag:
+        return get("duty")
+    if "compassion" in tag or "ahimsa" in tag:
+        return get("compassion")
+    if "truth" in tag or "satya" in tag:
+        return get("truth")
+    if "equal" in tag or "sama" in tag:
+        return get("equality")
+    if "self" in tag or "control" in tag or "discipline" in tag:
+        return get("self-control")
+    if "impermanence" in tag or "time" in tag or "entropy" in tag:
+        return get("impermanence")
     return get("detachment") or get("duty") or {}
 
 def _select_steps(pool, signals, k):
@@ -349,8 +231,7 @@ def _select_steps(pool, signals, k):
 
 def generate_action_plan_dynamic(user_input: str, verse_tag: str | None, sizes=(3,3,3)) -> dict:
     signals = extract_signals(user_input)
-    tag = (verse_tag or "").strip().lower() or _synthesize_tag(user_input)
-    tmpl = _tmpl_for_tag(tag)
+    tmpl = _tmpl_for_tag(verse_tag)
     short_pool = tmpl.get("short", [])
     med_pool   = tmpl.get("medium", [])
     long_pool  = tmpl.get("long", [])
@@ -377,34 +258,6 @@ def generate_action_plan_dynamic(user_input: str, verse_tag: str | None, sizes=(
         ]
     return {"short": short[:5], "medium": med[:5], "long": long[:5]}
 
-# ---------- Dynamic Krishna explanation helpers ----------
-def _word_overlap(user_input, verse_text):
-    u = set([w for w in (user_input or "").lower().split() if len(w) > 3])
-    v = set([w for w in (verse_text or "").lower().split() if len(w) > 3])
-    overlap = list(u.intersection(v))
-    return ", ".join(sorted(overlap)[:3]) or "core theme alignment"
-
-def _krishna_explainer(tag):
-    tag = (tag or "").lower()
-    if "duty" in tag:           return "Right action means honoring your role without vanity or avoidance."
-    if "compassion" in tag:     return "Choose paths that reduce harm and preserve dignity."
-    if "truth" in tag:          return "Clarity grows where truth is chosen over convenience."
-    if "self" in tag or "discipline" in tag: return "Mastery of self calms the storm before action."
-    if "impermanence" in tag:   return "Act wisely, knowing conditions change; keep options flexible."
-    return "Detach from outcomes; align with your highest duty."
-
-# ---------- Light thread-aware boosts ----------
-def _boost_by_session_tag(df, current_tag):
-    if not STREAMLIT:
-        return df
-    history = st.session_state.get("Usage Journal", [])
-    recent_tags = [h.get("tag") for h in history[-5:] if h.get("tag")]
-    bonus = 0.02 * recent_tags.count(current_tag.lower())
-    if "similarity" in df:
-        df = df.copy()
-        df["similarity"] = df["similarity"].fillna(0) + bonus
-    return df
-
 # ---------- Core response generator ----------
 def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     """Return (response_markdown, top_verse_row) with robust fallbacks."""
@@ -415,7 +268,6 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
     if df_matrix is None or getattr(df_matrix, 'empty', True):
         return "⚠️ Error: Verse data not loaded. Please check the CSV file.", None
 
-    # Required columns
     col_text = None
     for candidate in ["Short English Translation", "English", "Verse", "Translation", "Summary"]:
         if candidate in df_matrix.columns:
@@ -429,59 +281,34 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
         if candidate in df_matrix.columns:
             col_id = candidate
             break
-
     col_map = None
     for candidate in ["Symbolic Conscience Mapping", "Mapping", "Theme", "Tag"]:
         if candidate in df_matrix.columns:
             col_map = candidate
             break
 
-    # --- Ranking: prefer TF-IDF when SBERT/helpers missing ---
     try:
-        use_tfidf = (not HAS_SBERT and not HELPERS and _HAS_SKLEARN)
-        if use_tfidf:
-            top = _tfidf_rank(df_matrix, col_text, user_input, top_k=top_k)
-            if top is None or top.empty:
-                raise RuntimeError("TF-IDF unavailable or returned empty. Falling back to embeddings.")
-            top_row = top.iloc[0]
-            # make a synthetic similarity for UI trace harmony
-            df_sim = top.copy()
-            df_sim["similarity"] = df_sim["similarity_tfidf"]
-            top = df_sim
-        else:
-            # Embeddings path (with fallback random)
-            if 'embedding' not in df_matrix.columns:
-                df_matrix = df_matrix.copy()
-                df_matrix['embedding'] = df_matrix[col_text].fillna("default").apply(get_embedding)
+        if 'embedding' not in df_matrix.columns:
+            df_matrix = df_matrix.copy()
+            df_matrix['embedding'] = df_matrix[col_text].fillna("default").apply(get_embedding)
 
-            query_emb = get_embedding(user_input)
-            if query_emb is None:
-                return "⚠️ Error: Embeddings unavailable.", None
+        query_emb = get_embedding(user_input)
+        if query_emb is None:
+            return "⚠️ Error: Embeddings unavailable.", None
 
-            df_matrix['similarity'] = df_matrix['embedding'].apply(lambda e: cosine_similarity(query_emb, e))
-            if df_matrix['similarity'].isna().all() or df_matrix['similarity'].max() <= 0:
-                # last resort: try tfidf once
-                if _HAS_SKLEARN:
-                    top = _tfidf_rank(df_matrix, col_text, user_input, top_k=top_k)
-                    if top is None or top.empty:
-                        return "⚠️ Unable to find a matching verse. Try rephrasing your question.", None
-                    top_row = top.iloc[0]
-                else:
-                    return "⚠️ Unable to find a matching verse. Try rephrasing your question.", None
-            else:
-                top = df_matrix.sort_values('similarity', ascending=False).head(top_k)
-                top_row = top.iloc[0]
+        df_matrix['similarity'] = df_matrix['embedding'].apply(lambda e: cosine_similarity(query_emb, e))
+        if df_matrix['similarity'].isna().all() or df_matrix['similarity'].max() <= 0:
+            return "⚠️ Unable to find a matching verse. Try rephrasing your question.", None
+
+        top = df_matrix.sort_values('similarity', ascending=False).head(top_k)
+        top_row = top.iloc[0]
     except Exception as e:
-        logger.error(f"Ranking pipeline failed: {e}")
+        logger.error(f"Embedding/similarity pipeline failed: {e}")
         return f"⚠️ Error computing similarity: {str(e)}", None
 
     verse_text = str(top_row[col_text])
     verse_id = str(top_row[col_id]) if col_id else "—"
-    verse_tag = (str(top_row[col_map]).strip() if col_map and pd.notna(top_row[col_map]) else "") or _synthesize_tag(verse_text)
-
-    # Light session-aware similarity nudge
-    top = _boost_by_session_tag(top, verse_tag)
-    top_row = top.iloc[0]
+    verse_tag = str(top_row[col_map]) if col_map else "—"
 
     header = f"""
 **Nearest Verse:** `{verse_id}`  
@@ -489,20 +316,18 @@ def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
 _Tag:_ `{verse_tag}`
 """
 
-    # --- Mode bodies ---
     if mode == "Krishna":
-        why = _word_overlap(user_input, verse_text)
-        body = f"""
+        body = """
 **Krishna's Counsel**  
-{_krishna_explainer(verse_tag)}
-
-**Why this verse?** Matched on **{verse_tag}** via **{why}**.
+Act without attachment to outcomes. Let clarity guide action; align with duty over impulse.  
+**Why this verse?** Your query semantically matched teachings on detachment and right action.
 """
     elif mode == "Krishna-Explains":
         plan = generate_action_plan_dynamic(user_input, verse_tag)
         body = f"""
 **Krishna's Teaching — Explained**  
-{_krishna_explainer(verse_tag)}
+This verse instructs that *right action* is measured by intent and alignment with duty, not by clinging to outcomes.  
+Attachment breeds anxiety and bias; detachment clears the mind to see the dharmic path.
 
 **Action Plan**
 
@@ -518,57 +343,22 @@ _Tag:_ `{verse_tag}`
     elif mode == "Arjuna":
         hints = arjuna_reflections(user_input, df_matrix)
         body = "**Arjuna's Reflection**\n" + bulletize(hints, max_items=3)
-
     elif mode in ["Dharma Mirror", "Mirror"]:
         lines, _ = mirror_reflections(user_input, df_matrix)
         body = "**Dharma Mirror**\n" + bulletize(lines, max_items=3)
-
     elif mode == "Vyasa":
         body = """
 **Vyasa's Narration**  
-You are at a fork: name the forces, duties, and attachments at play.  
+You are at a fork: describe the forces, duties, and attachments at play.  
 This verse frames the context so duty can be seen without distortion.
 """
-
-    elif mode == "Technical":
-        cols = [c for c in ['similarity', 'similarity_tfidf', col_id, col_map, col_text] if c and c in top.columns]
+    elif mode in ["Technical"]:
+        cols = [c for c in ['similarity', col_id, col_map, col_text] if c and c in top.columns]
         body = f"""
 **Technical Trace**  
-Top-{top_k} matches (higher = closer):  
+Top-{top_k} matches (similarity):  
 {top[cols].to_string(index=False)}
 """
-
-    elif mode == "Karmic Entanglement Simulator":
-        # Two illustrative forks with trait scoring (rule-based for MVP)
-        signals = extract_signals(user_input)
-        paths = [
-            {"name": "Act Now", "traits": ["service","non-malice"], "notes": "Seize momentum with reversible step.", "score": 0},
-            {"name": "Wait & Verify", "traits": ["non-attachment","priority-of-dharma"], "notes": "Reduce harm via checks.", "score": 0}
-        ]
-        # Simple scoring: urgency favors Act Now; risk favors Wait & Verify
-        for p in paths:
-            p["score"] += 1.0
-            if signals["urgency"] and "Act Now" in p["name"]: p["score"] += 0.6
-            if signals["risk_words"] and "Wait" in p["name"]: p["score"] += 0.7
-            if signals["stakeholder_conflict"] and "Wait" in p["name"]: p["score"] += 0.3
-        winner = sorted(paths, key=lambda x: x["score"], reverse=True)[0]
-        body = f"""**Karmic Entanglement (Two-Path Simulation)**
-
-- **Path A — {paths[0]['name']}** · traits: {", ".join(paths[0]['traits'])} · note: {paths[0]['notes']} · score: {paths[0]['score']:.2f}
-- **Path B — {paths[1]['name']}** · traits: {", ".join(paths[1]['traits'])} · note: {paths[1]['notes']} · score: {paths[1]['score']:.2f}
-
-**Mirror Verdict:** _Leaning **{winner['name']}**_ given current signals.
-"""
-
-    elif mode == "Forked Fate Contemplation":
-        body = f"""**Forked Fate (Narrative)**
-
-- **If you choose X:** You honor urgency but risk unseen harms. Keep the step reversible and document stop-rules.
-- **If you choose Y:** You reduce harm and bias, but momentum may fade. Protect the window with a timebox.
-
-**Trade-off:** Seek a small, reversible probe that preserves dignity and learning while honoring duty.
-"""
-
     else:
         body = "Choose dharma; preserve dignity and long-term harmony."
 
@@ -576,13 +366,6 @@ Top-{top_k} matches (higher = closer):
 ---
 *Tip:* Refine your question to include people, constraints, and the value you refuse to compromise.
 """
-
-    # Log usage for light session memory
-    if STREAMLIT:
-        st.session_state.setdefault("Usage Journal", []).append({
-            "query": user_input, "tag": verse_tag, "mode": mode
-        })
-
     return header + "\n\n" + body + "\n\n" + footer, top_row
 
 # ---------- UI ----------
@@ -633,11 +416,10 @@ if STREAMLIT:
                 except Exception as e:
                     logger.error(f"Failed to load {path}: {e}")
     if df_matrix is None:
-        if STREAMLIT:
-            st.error("⚠️ Error: Could not load verse matrix CSV file. Please check the file path.")
-            st.stop()
+        st.error("⚠️ Error: Could not load verse matrix CSV file. Please check the file path.")
+        st.stop()
 
-    if STREAMLIT and st.button("🔍 Submit"):
+    if st.button("🔍 Submit"):
         try:
             response, verse_info = generate_gita_response(mode, df_matrix, user_input)
             st.markdown(
