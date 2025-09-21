@@ -1,12 +1,19 @@
 # app/ui.py
+
 from __future__ import annotations
 import os
 import logging
 from pathlib import Path
+import sys
 import pandas as pd
 import streamlit as st
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from engine import ranking
+from engine import planner
 from engine.planner import generate_action_plan, krishna_teaching
 
 # -------- Config & logging --------
