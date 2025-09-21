@@ -1,670 +1,152 @@
-# dharmaai_mvp_app.py
-# ✅ Updated for dynamic, context-relevant responses
-
-import sys
+# app/ui.py
+from __future__ import annotations
 import os
 import logging
 from pathlib import Path
+import pandas as pd
+import streamlit as st
 
-# 🔵 Set project root (modify as needed)
-project_root = str(Path(__file__).parent)
-sys.path.append(project_root)
+from engine import ranking
+from engine.planner import generate_action_plan, krishna_teaching
 
-# Configure logging
+# -------- Config & logging --------
+PROJECT_ROOT = str(Path(__file__).resolve().parents[1])
+os.environ["PROJECT_ROOT"] = PROJECT_ROOT
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler()]
 )
-logger = logging.getLogger(__name__)
-logger.info(f"Project root set to: {project_root}")
-logger.info(f"sys.path updated: {sys.path}")
+logger = logging.getLogger("dharmaai.ui")
 
-# 🔵 FEATURE FLAG: GitaBot integration
-ENABLE_GITABOT = os.getenv("ENABLE_GITABOT", "true").lower() == "true"
+st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
+st.title("🪔 DharmaAI – Minimum Viable Conscience")
+st.subheader("Ask a question to GitaBot")
 
-# --- Optional imports with guards ---
-try:
-    import streamlit as st
-    STREAMLIT = True
-    st.set_page_config(page_title="🪔 DharmaAI – GitaBot Reflection Engine", layout="centered")
-except Exception:
-    STREAMLIT = False
-    st = None
-    logger.error("Streamlit is not available. Install streamlit to run the UI.")
-
-try:
-    import pandas as pd
-    import numpy as np
-    PANDAS_NUMPY = True
-except Exception:
-    pd = None
-    np = None
-    PANDAS_NUMPY = False
-    logger.error("pandas/numpy not available.")
-
-# Sentence-BERT (optional)
-try:
-    from sentence_transformers import SentenceTransformer
-    HAS_SBERT = True
-except Exception:
-    HAS_SBERT = False
-    logger.warning("sentence_transformers not found; Sentence-BERT embeddings unavailable")
-
-# Helpers (optional, we fallback if missing)
-try:
-    from utils.helpers import get_embedding as _get_embedding, cosine_similarity as _cosine_similarity
-    HELPERS = True
-except Exception:
-    HELPERS = False
-    logger.warning("utils.helpers not found; using fallback get_embedding and cosine_similarity")
-
-# Dharma Mirror (optional)
-try:
-    from utils.dharma_mirror_utils import generate_dharma_mirror_reflections as _mirror_reflections
-    HAS_MIRROR = True
-except Exception:
-    HAS_MIRROR = False
-    logger.warning("utils.dharma_mirror_utils not found; using fallback for Dharma Mirror reflections")
-
-# Modes (optional)
-try:
-    from components.modes import generate_arjuna_reflections as _arjuna_reflections
-    HAS_MODES = True
-except Exception:
-    HAS_MODES = False
-    logger.warning("components.modes not found; using fallback for Arjuna reflections")
-
-# ---------- Utility helpers ----------
-def _ensure_list(x):
-    if x is None:
-        return []
-    if isinstance(x, tuple) and len(x) >= 1:
-        x = x[0]
-    if isinstance(x, (list, tuple)):
-        return list(x)
-    return [x]
-
-def bulletize(items, max_items=3):
-    out = []
-    for itm in _ensure_list(items)[:max_items]:
-        if isinstance(itm, (list, tuple)):
-            itm = " ".join(map(str, itm))
-        else:
-            itm = str(itm)
-        out.append(f"- {itm}")
-    return "\n".join(out) if out else "- (no reflections)"
-
-# ---------- Embedding & Similarity Fallbacks ----------
-def _fallback_embedding(text: str):
-    """Stable random embedding as last resort."""
-    if not PANDAS_NUMPY:
-        return None
-    if not text or not isinstance(text, str):
-        text = "default"
-    if HAS_SBERT:
-        try:
-            model = SentenceTransformer('all-MiniLM-L6-v2')
-            return model.encode(text, convert_to_numpy=True)
-        except Exception as e:
-            logger.error(f"Error loading Sentence-BERT model: {e}")
-    rng = np.random.default_rng(abs(hash(text)) % (2**32))
-    return rng.random(384)
-
-def _fallback_cosine(a, b):
-    if not PANDAS_NUMPY:
-        return 0.0
-    a = np.asarray(a); b = np.asarray(b)
-    na, nb = np.linalg.norm(a), np.linalg.norm(b)
-    if na == 0 or nb == 0:
-        return 0.0
-    return float(np.dot(a, b) / (na * nb))
-
-def get_embedding(text):
-    if HELPERS:
-        try:
-            return _get_embedding(text)
-        except Exception as e:
-            logger.warning(f"helper.get_embedding failed, using fallback: {e}")
-    return _fallback_embedding(text)
-
-def cosine_similarity(v1, v2):
-    if HELPERS:
-        try:
-            return _cosine_similarity(v1, v2)
-        except Exception as e:
-            logger.warning(f"helper.cosine_similarity failed, using fallback: {e}")
-    return _fallback_cosine(v1, v2)
-
-# ---------- TF-IDF Fallback (content-aware, no external services) ----------
-_TFIDF = None
-_TFIDF_VECS = None
-_TFIDF_COL = None
-_HAS_SKLEARN = True
-try:
-    from sklearn.feature_extraction.text import TfidfVectorizer
-except Exception:
-    _HAS_SKLEARN = False
-    logger.warning("scikit-learn not available; TF-IDF fallback disabled")
-
-def _ensure_tfidf(df_matrix, col_text):
-    global _TFIDF, _TFIDF_VECS, _TFIDF_COL
-    if not _HAS_SKLEARN:
-        return
-    if _TFIDF is not None and _TFIDF_COL == col_text:
-        return
-    texts = df_matrix[col_text].fillna("").astype(str).tolist()
-    _TFIDF = TfidfVectorizer(ngram_range=(1,2), min_df=1, max_features=20000)
-    _TFIDF_VECS = _TFIDF.fit_transform(texts)
-    _TFIDF_COL = col_text
-
-def _tfidf_rank(df_matrix, col_text, query, top_k=3):
-    if not _HAS_SKLEARN:
-        return None
-    _ensure_tfidf(df_matrix, col_text)
-    qv = _TFIDF.transform([query or ""])
-    sims = (_TFIDF_VECS @ qv.T).toarray().ravel()
-    df = df_matrix.copy()
-    df["similarity_tfidf"] = sims
-    return df.sort_values("similarity_tfidf", ascending=False).head(top_k)
-
-# ---------- Mirror & Arjuna ----------
-def mirror_reflections(user_input, df_matrix):
-    if HAS_MIRROR:
-        try:
-            hints = _mirror_reflections(user_input, df_matrix)
-            return _ensure_list(hints), None
-        except Exception as e:
-            logger.warning(f"mirror reflections failed, using fallback: {e}")
-    return [
-        "Reflect with honesty: what is your true intention?",
-        "Consider long-term outcomes over short-term gains.",
-        "Choose the path that preserves dignity—yours and others'."
-    ], None
-
-def arjuna_reflections(user_input, df_matrix):
-    if HAS_MODES:
-        try:
-            hints = _arjuna_reflections(user_input, df_matrix)
-            return _ensure_list(hints)
-        except Exception as e:
-            logger.warning(f"arjuna reflections failed, using fallback: {e}")
-    return [
-        "Your reluctance signals attachment—acknowledge it without judgment.",
-        "Duty feels heavy when desire leads; align action with higher purpose.",
-        "Courage is clarity in motion; take one dharmic step now."
+# -------- Cache heavy things --------
+@st.cache_resource(show_spinner=False)
+def load_matrix() -> pd.DataFrame | None:
+    candidates = [
+        Path(PROJECT_ROOT) / "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
+        Path(PROJECT_ROOT) / "app" / "data" / "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
+        Path(PROJECT_ROOT) / "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv",
     ]
+    for p in candidates:
+        if p.exists():
+            try:
+                return pd.read_csv(p, encoding="utf-8")
+            except UnicodeDecodeError:
+                return pd.read_csv(p, encoding="ISO-8859-1")
+    return None
 
-# ---------- Signals, Tagging & Action Plans ----------
-def extract_signals(text: str) -> dict:
-    t = (text or "").lower()
-    return {
-        "urgency": any(k in t for k in ["urgent","deadline","now","asap","today","tonight"]),
-        "uncertainty": any(k in t for k in ["uncertain","unknown","ambiguous","confused","unsure"]),
-        "stakeholder_conflict": any(k in t for k in ["team","manager","customer","family","partner","board","stakeholder","investor","client","legal","compliance"]),
-        "risk_words": any(k in t for k in ["risk","harm","unsafe","privacy","bias","security","safety","breach","fraud"]),
-        "domain": "work" if any(k in t for k in ["product","ship","release","kpi","roadmap","sprint","contract","vendor","procure","pilot","market"]) else \
-                  "family" if any(k in t for k in ["family","parent","child","spouse","partner"]) else "general",
-    }
+df = load_matrix()
+if df is None:
+    st.error("⚠️ Could not load verse matrix CSV. Place it under /data/.")
+    st.stop()
 
-def _synthesize_tag(text):
-    t = (text or "").lower()
-    if any(k in t for k in ["duty","role","obligation","responsibility"]): return "duty"
-    if any(k in t for k in ["harm","violence","ahimsa","compassion","kindness"]): return "compassion"
-    if any(k in t for k in ["truth","honest","transparency","satya"]): return "truth"
-    if any(k in t for k in ["discipline","self","control","temperance"]): return "self-control"
-    if any(k in t for k in ["impermanence","change","time","entropy"]): return "impermanence"
-    return "detachment"
+# -------- Modes --------
+MODES = [
+    "Krishna",
+    "Krishna-Explains",
+    "Arjuna",
+    "Dharma Mirror",
+    "Vyasa",
+    "Technical",
+    "Karmic Entanglement Simulator",
+    "Forked Fate Contemplation"
+]
+mode = st.sidebar.radio("Select Mode", MODES)
+user_input = st.text_input("Your ethical question or dilemma:", value="")
 
-# Load YAML templates (with fallback if missing)
-ACTION_TEMPLATES = None
-try:
-    import yaml
-    from yaml import SafeLoader
-    tmpl_path = Path(project_root) / "action_templates.yaml"
-    if tmpl_path.exists():
-        ACTION_TEMPLATES = yaml.safe_load(tmpl_path.read_text(encoding="utf-8"))
-    else:
-        ACTION_TEMPLATES = {}
-except Exception as e:
-    logger.warning(f"YAML not available or failed to load: {e}")
-    ACTION_TEMPLATES = {}
+if "journal" not in st.session_state:
+    st.session_state["journal"] = []
 
-# Built-in defaults to guarantee plans
-if not ACTION_TEMPLATES:
-    ACTION_TEMPLATES = {
-        "detachment": {
-            "short": [
-                {"step":"Write the duty in one sentence; remove outcome words.","tags":["truth","minimal-step"]},
-                {"step":"Take one reversible step today.","tags":["time","reversibility"]},
-                {"step":"Name the attachment you’ll drop (status, speed, approval).","tags":["self-control"]}
-            ],
-            "medium": [
-                {"step":"Set checkpoints and stop-rules.","tags":["risk"]},
-                {"step":"Publish success & harm criteria.","tags":["truth","risk"]}
-            ],
-            "long": [
-                {"step":"Codify the policy so it survives handoffs.","tags":["truth"]},
-                {"step":"Schedule a quarterly bias audit.","tags":["bias","risk"]}
-            ]
-        },
-        "duty": {
-            "short": [
-                {"step":"Define who has decision rights.","tags":["stakeholders","decision-rights","alignment"]},
-                {"step":"Clarify non-negotiable boundary.","tags":["truth"]},
-                {"step":"Commit to one dharmic action within 24h.","tags":["time"]}
-            ],
-            "medium":[
-                {"step":"Share trade-offs with stakeholders.","tags":["truth","stakeholders"]},
-                {"step":"Pilot with a reversible experiment.","tags":["experiment","reversibility"]}
-            ],
-            "long":[
-                {"step":"Establish a recurring governance review.","tags":["risk","stakeholders"]}
-            ]
-        },
-        "compassion": {
-            "short":[
-                {"step":"List affected parties & harms.","tags":["risk","harm","stakeholders"]},
-                {"step":"Choose the path that reduces harm first.","tags":["non-malice","risk"]}
-            ],
-            "medium":[
-                {"step":"Add a dignity check in approvals.","tags":["stakeholders","truth"]}
-            ],
-            "long":[
-                {"step":"Track harm-reduction metrics alongside KPIs.","tags":["risk"]}
-            ]
-        },
-        "truth": {
-            "short":[
-                {"step":"Expose the uncertain assumption.","tags":["truth","uncertainty"]},
-                {"step":"Seek a disconfirming perspective.","tags":["bias"]}
-            ],
-            "medium":[
-                {"step":"Write a one-page decision log.","tags":["truth"]}
-            ],
-            "long":[
-                {"step":"Make transparency the default policy.","tags":["truth"]}
-            ]
-        },
-        "self-control": {
-            "short":[
-                {"step":"Insert a pause: 10 breaths before reply.","tags":["self-control"]},
-                {"step":"Timebox the decision; avoid doom-scrolling.","tags":["time","discipline"]}
-            ],
-            "medium":[
-                {"step":"Create triggers for calm escalation.","tags":["discipline"]}
-            ],
-            "long":[
-                {"step":"Practice a weekly detachment ritual.","tags":["discipline"]}
-            ]
-        },
-        "impermanence": {
-            "short":[
-                {"step":"Separate transient noise from signal.","tags":["uncertainty"]},
-                {"step":"Favor options that keep future flexibility.","tags":["reversibility"]}
-            ],
-            "medium":[
-                {"step":"Stage commitments by learning milestones.","tags":["experiment"]}
-            ],
-            "long":[
-                {"step":"Institutionalize sunset reviews.","tags":["risk"]}
-            ]
-        }
-    }
-
-def _tmpl_for_tag(tag: str) -> dict:
-    tag = (tag or "").lower()
-    def get(name): return ACTION_TEMPLATES.get(name, {})
-    if "detach" in tag or "karma" in tag:   return get("detachment")
-    if "duty" in tag or "role" in tag:      return get("duty")
-    if "compassion" in tag or "ahimsa" in tag: return get("compassion")
-    if "truth" in tag or "satya" in tag:    return get("truth")
-    if "equal" in tag or "sama" in tag:     return get("truth")
-    if "self" in tag or "control" in tag or "discipline" in tag: return get("self-control")
-    if "impermanence" in tag or "time" in tag or "entropy" in tag: return get("impermanence")
-    return get("detachment") or get("duty") or {}
-
-def _select_steps(pool, signals, k):
-    if not isinstance(pool, list):
-        return []
-    scored = []
-    for item in pool:
-        step = item.get("step") if isinstance(item, dict) else str(item)
-        tags = [t.lower() for t in (item.get("tags", []) if isinstance(item, dict) else [])]
-        s = 1.0
-        if signals["urgency"] and any(t in tags for t in ["time","reversibility","minimal-step"]): s += 0.4
-        if signals["uncertainty"] and any(t in tags for t in ["experiment","uncertainty","probe"]): s += 0.4
-        if signals["stakeholder_conflict"] and any(t in tags for t in ["stakeholders","decision-rights","alignment"]): s += 0.35
-        if signals["risk_words"] and any(t in tags for t in ["risk","privacy","bias","security","safety","harm"]): s += 0.45
-        scored.append((s, step))
-    scored.sort(reverse=True, key=lambda x: x[0])
-    top = [s for _, s in scored[:max(1, k)]]
-    if len(top) > 1:
-        import random
-        rnd = random.Random(hash("::".join(top)) & 0xFFFFFFFF)
-        rest = top[1:]
-        rnd.shuffle(rest)
-        top = [top[0]] + rest
-    return top
-
-def generate_action_plan_dynamic(user_input: str, verse_tag: str | None, sizes=(3,3,3)) -> dict:
-    signals = extract_signals(user_input)
-    tag = (verse_tag or "").strip().lower() or _synthesize_tag(user_input)
-    tmpl = _tmpl_for_tag(tag)
-    short_pool = tmpl.get("short", [])
-    med_pool   = tmpl.get("medium", [])
-    long_pool  = tmpl.get("long", [])
-    short = _select_steps(short_pool, signals, sizes[0]) if short_pool else []
-    med   = _select_steps(med_pool,   signals, sizes[1]) if med_pool   else []
-    long  = _select_steps(long_pool,  signals, sizes[2]) if long_pool  else []
-    if signals["risk_words"] and not any("harm" in s.lower() or "privacy" in s.lower() for s in short + med):
-        short = ["Run a quick harm scan: privacy, safety, bias, security."] + short
-    if not (short or med or long):
-        short = [
-            "Clarify your duty and one non-negotiable boundary.",
-            "Take one reversible step aligned with duty.",
-            "Write what you will measure (harm + dignity + utility).",
-        ]
-        med = [
-            "Pilot with review checkpoints and a stop rule.",
-            "Invite a counter-perspective to reduce bias.",
-            "Document trade-offs and communicate them plainly.",
-        ]
-        long = [
-            "Create a recurring review ritual (pre/post decision).",
-            "Codify policy so it survives handoffs.",
-            "Track harm reduction and fairness, not just outcomes.",
-        ]
-    return {"short": short[:5], "medium": med[:5], "long": long[:5]}
-
-# ---------- Dynamic Krishna explanation helpers ----------
-def _word_overlap(user_input, verse_text):
+def _word_overlap(user_input: str, verse_text: str) -> str:
     u = set([w for w in (user_input or "").lower().split() if len(w) > 3])
     v = set([w for w in (verse_text or "").lower().split() if len(w) > 3])
-    overlap = list(u.intersection(v))
-    return ", ".join(sorted(overlap)[:3]) or "core theme alignment"
+    ov = list(u.intersection(v))
+    return ", ".join(sorted(ov)[:3]) or "core theme alignment"
 
-def _krishna_explainer(tag):
-    tag = (tag or "").lower()
-    if "duty" in tag:           return "Right action means honoring your role without vanity or avoidance."
-    if "compassion" in tag:     return "Choose paths that reduce harm and preserve dignity."
-    if "truth" in tag:          return "Clarity grows where truth is chosen over convenience."
-    if "self" in tag or "discipline" in tag: return "Mastery of self calms the storm before action."
-    if "impermanence" in tag:   return "Act wisely, knowing conditions change; keep options flexible."
-    return "Detach from outcomes; align with your highest duty."
-
-# ---------- Light thread-aware boosts ----------
-def _boost_by_session_tag(df, current_tag):
-    if not STREAMLIT:
-        return df
-    history = st.session_state.get("Usage Journal", [])
-    recent_tags = [h.get("tag") for h in history[-5:] if h.get("tag")]
-    bonus = 0.02 * recent_tags.count(current_tag.lower())
-    if "similarity" in df:
-        df = df.copy()
-        df["similarity"] = df["similarity"].fillna(0) + bonus
-    return df
-
-# ---------- Core response generator ----------
-def generate_gita_response(mode, df_matrix, user_input=None, top_k=3):
-    """Return (response_markdown, top_verse_row) with robust fallbacks."""
-    if not user_input or len(user_input.strip()) < 3:
-        return "🛑 Please ask a more complete or meaningful question.", None
-    if not PANDAS_NUMPY:
-        return "⚠️ Error: Required libraries (pandas, numpy) not installed.", None
-    if df_matrix is None or getattr(df_matrix, 'empty', True):
-        return "⚠️ Error: Verse data not loaded. Please check the CSV file.", None
-
-    # Required columns
-    col_text = None
-    for candidate in ["Short English Translation", "English", "Verse", "Translation", "Summary"]:
-        if candidate in df_matrix.columns:
-            col_text = candidate
-            break
-    if col_text is None:
-        return "⚠️ Error: Verse text column not found in matrix.", None
-
-    col_id = None
-    for candidate in ["Verse ID", "ID", "Ref", "Key"]:
-        if candidate in df_matrix.columns:
-            col_id = candidate
-            break
-
-    col_map = None
-    for candidate in ["Symbolic Conscience Mapping", "Mapping", "Theme", "Tag"]:
-        if candidate in df_matrix.columns:
-            col_map = candidate
-            break
-
-    # --- Ranking: prefer TF-IDF when SBERT/helpers missing ---
+# -------- Submit --------
+if st.button("🔍 Submit") and user_input.strip():
     try:
-        use_tfidf = (not HAS_SBERT and not HELPERS and _HAS_SKLEARN)
-        if use_tfidf:
-            top = _tfidf_rank(df_matrix, col_text, user_input, top_k=top_k)
-            if top is None or top.empty:
-                raise RuntimeError("TF-IDF unavailable or returned empty. Falling back to embeddings.")
-            top_row = top.iloc[0]
-            # make a synthetic similarity for UI trace harmony
-            df_sim = top.copy()
-            df_sim["similarity"] = df_sim["similarity_tfidf"]
-            top = df_sim
-        else:
-            # Embeddings path (with fallback random)
-            if 'embedding' not in df_matrix.columns:
-                df_matrix = df_matrix.copy()
-                df_matrix['embedding'] = df_matrix[col_text].fillna("default").apply(get_embedding)
+        top, row, col_text, col_id, col_tag = ranking.rank(df, user_input, top_k=3)
+        verse_text = str(row[col_text])
+        verse_id   = str(row[col_id]) if col_id else "—"
+        verse_tag  = str(row[col_tag]) if col_tag else "detachment"
 
-            query_emb = get_embedding(user_input)
-            if query_emb is None:
-                return "⚠️ Error: Embeddings unavailable.", None
-
-            df_matrix['similarity'] = df_matrix['embedding'].apply(lambda e: cosine_similarity(query_emb, e))
-            if df_matrix['similarity'].isna().all() or df_matrix['similarity'].max() <= 0:
-                # last resort: try tfidf once
-                if _HAS_SKLEARN:
-                    top = _tfidf_rank(df_matrix, col_text, user_input, top_k=top_k)
-                    if top is None or top.empty:
-                        return "⚠️ Unable to find a matching verse. Try rephrasing your question.", None
-                    top_row = top.iloc[0]
-                else:
-                    return "⚠️ Unable to find a matching verse. Try rephrasing your question.", None
-            else:
-                top = df_matrix.sort_values('similarity', ascending=False).head(top_k)
-                top_row = top.iloc[0]
-    except Exception as e:
-        logger.error(f"Ranking pipeline failed: {e}")
-        return f"⚠️ Error computing similarity: {str(e)}", None
-
-    verse_text = str(top_row[col_text])
-    verse_id = str(top_row[col_id]) if col_id else "—"
-    verse_tag = (str(top_row[col_map]).strip() if col_map and pd.notna(top_row[col_map]) else "") or _synthesize_tag(verse_text)
-
-    # Light session-aware similarity nudge
-    top = _boost_by_session_tag(top, verse_tag)
-    top_row = top.iloc[0]
-
-    header = f"""
+        st.markdown(f"""
 **Nearest Verse:** `{verse_id}`  
 *{verse_text}*  
 _Tag:_ `{verse_tag}`
-"""
+""")
 
-    # --- Mode bodies ---
-    if mode == "Krishna":
-        why = _word_overlap(user_input, verse_text)
-        body = f"""
+        # ---- Mode rendering (kept simple; can be extended) ----
+        if mode == "Krishna":
+            why = _word_overlap(user_input, verse_text)
+            st.markdown(f"""
 **Krishna's Counsel**  
-{_krishna_explainer(verse_tag)}
+{krishna_teaching(verse_tag)}
 
 **Why this verse?** Matched on **{verse_tag}** via **{why}**.
-"""
-    elif mode == "Krishna-Explains":
-        plan = generate_action_plan_dynamic(user_input, verse_tag)
-        body = f"""
+""")
+
+        elif mode == "Krishna-Explains":
+            plan = generate_action_plan(user_input, verse_tag)
+            st.markdown(f"""
 **Krishna's Teaching — Explained**  
-{_krishna_explainer(verse_tag)}
+{krishna_teaching(verse_tag)}
 
 **Action Plan**
 
 **Short Term (today–this week)**  
-{chr(10).join(f"- {s}" for s in plan['short'])}
+- {"\n- ".join(plan["short"])}
 
 **Medium Term (next 2–6 weeks)**  
-{chr(10).join(f"- {m}" for m in plan['medium'])}
+- {"\n- ".join(plan["medium"])}
 
 **Long Term (quarter and beyond)**  
-{chr(10).join(f"- {l}" for l in plan['long'])}
-"""
-    elif mode == "Arjuna":
-        hints = arjuna_reflections(user_input, df_matrix)
-        body = "**Arjuna's Reflection**\n" + bulletize(hints, max_items=3)
+- {"\n- ".join(plan["long"])}
+""")
 
-    elif mode in ["Dharma Mirror", "Mirror"]:
-        lines, _ = mirror_reflections(user_input, df_matrix)
-        body = "**Dharma Mirror**\n" + bulletize(lines, max_items=3)
+        elif mode == "Technical":
+            cols = [c for c in ["similarity", "similarity_tfidf", col_id, col_tag, col_text] if c in top.columns]
+            st.code(top[cols].to_string(index=False), language="text")
 
-    elif mode == "Vyasa":
-        body = """
-**Vyasa's Narration**  
-You are at a fork: name the forces, duties, and attachments at play.  
-This verse frames the context so duty can be seen without distortion.
-"""
+        elif mode == "Karmic Entanglement Simulator":
+            # toy two-path scoring
+            from engine.planner import extract_signals
+            sig = extract_signals(user_input)
+            paths = [
+                {"name":"Act Now","score":1.0 + (0.6 if sig["urgency"] else 0.0),"note":"Seize momentum with a reversible step."},
+                {"name":"Wait & Verify","score":1.0 + (0.7 if sig["risk_words"] else 0.0) + (0.3 if sig["stakeholder_conflict"] else 0.0),"note":"Reduce harm via checks."}
+            ]
+            winner = sorted(paths, key=lambda x: x["score"], reverse=True)[0]
+            st.markdown(f"""**Karmic Entanglement (Two-Path Simulation)**
 
-    elif mode == "Technical":
-        cols = [c for c in ['similarity', 'similarity_tfidf', col_id, col_map, col_text] if c and c in top.columns]
-        body = f"""
-**Technical Trace**  
-Top-{top_k} matches (higher = closer):  
-{top[cols].to_string(index=False)}
-"""
-
-    elif mode == "Karmic Entanglement Simulator":
-        # Two illustrative forks with trait scoring (rule-based for MVP)
-        signals = extract_signals(user_input)
-        paths = [
-            {"name": "Act Now", "traits": ["service","non-malice"], "notes": "Seize momentum with reversible step.", "score": 0},
-            {"name": "Wait & Verify", "traits": ["non-attachment","priority-of-dharma"], "notes": "Reduce harm via checks.", "score": 0}
-        ]
-        # Simple scoring: urgency favors Act Now; risk favors Wait & Verify
-        for p in paths:
-            p["score"] += 1.0
-            if signals["urgency"] and "Act Now" in p["name"]: p["score"] += 0.6
-            if signals["risk_words"] and "Wait" in p["name"]: p["score"] += 0.7
-            if signals["stakeholder_conflict"] and "Wait" in p["name"]: p["score"] += 0.3
-        winner = sorted(paths, key=lambda x: x["score"], reverse=True)[0]
-        body = f"""**Karmic Entanglement (Two-Path Simulation)**
-
-- **Path A — {paths[0]['name']}** · traits: {", ".join(paths[0]['traits'])} · note: {paths[0]['notes']} · score: {paths[0]['score']:.2f}
-- **Path B — {paths[1]['name']}** · traits: {", ".join(paths[1]['traits'])} · note: {paths[1]['notes']} · score: {paths[1]['score']:.2f}
+- **Path A — {paths[0]['name']}** · score: {paths[0]['score']:.2f} · {paths[0]['note']}
+- **Path B — {paths[1]['name']}** · score: {paths[1]['score']:.2f} · {paths[1]['note']}
 
 **Mirror Verdict:** _Leaning **{winner['name']}**_ given current signals.
-"""
+""")
 
-    elif mode == "Forked Fate Contemplation":
-        body = f"""**Forked Fate (Narrative)**
+        elif mode == "Arjuna":
+            st.markdown("**Arjuna's Reflection**\n- Courage is clarity in motion; take one dharmic step now.")
 
-- **If you choose X:** You honor urgency but risk unseen harms. Keep the step reversible and document stop-rules.
-- **If you choose Y:** You reduce harm and bias, but momentum may fade. Protect the window with a timebox.
+        elif mode in ["Dharma Mirror", "Mirror"]:
+            st.markdown("**Dharma Mirror**\n- Reflect with honesty: what is your true intention?\n- Choose the path that preserves dignity.")
 
-**Trade-off:** Seek a small, reversible probe that preserves dignity and learning while honoring duty.
-"""
+        elif mode == "Vyasa":
+            st.markdown("**Vyasa's Narration**\nYou are at a fork; name duties, forces, and attachments at play.")
 
-    else:
-        body = "Choose dharma; preserve dignity and long-term harmony."
+        elif mode == "Forked Fate Contemplation":
+            st.markdown("""**Forked Fate (Narrative)**
+- **If you choose X:** You honor urgency but risk unseen harms. Keep the step reversible.
+- **If you choose Y:** You reduce harm and bias, but momentum may fade. Timebox and revisit.
+**Trade-off:** Seek a small, reversible probe that preserves dignity and learning while honoring duty.""")
 
-    footer = """
----
-*Tip:* Refine your question to include people, constraints, and the value you refuse to compromise.
-"""
+        st.session_state["journal"].append({"q": user_input, "tag": verse_tag, "mode": mode})
 
-    # Log usage for light session memory
-    if STREAMLIT:
-        st.session_state.setdefault("Usage Journal", []).append({
-            "query": user_input, "tag": verse_tag, "mode": mode
-        })
-
-    return header + "\n\n" + body + "\n\n" + footer, top_row
-
-# ---------- UI ----------
-if STREAMLIT:
-    st.title("🪔 DharmaAI – Minimum Viable Conscience")
-
-    if "Usage Journal" not in st.session_state:
-        st.session_state["Usage Journal"] = []
-
-    st.subheader("Ask a question to GitaBot")
-
-    if not ENABLE_GITABOT:
-        st.warning("🔒 GitaBot integration is currently **disabled**. Please check back later.")
-        st.stop()
-
-    available_modes = [
-        "Krishna",
-        "Krishna-Explains",
-        "Arjuna",
-        "Dharma Mirror",
-        "Vyasa",
-        "Technical",
-        "Karmic Entanglement Simulator",
-        "Forked Fate Contemplation"
-    ]
-    mode = st.sidebar.radio("Select Mode", available_modes)
-
-    user_input = st.text_input("Your ethical question or dilemma:", value="")
-
-    # Load verse matrix
-    matrix_paths = [
-        os.path.join(project_root, "data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
-        os.path.join(project_root, "app/data/gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv"),
-        os.path.join(project_root, "gita_dharmaAI_matrix_verse_1_to_2_50_logic.csv")
-    ]
-    df_matrix = None
-    if PANDAS_NUMPY:
-        for path in matrix_paths:
-            if os.path.exists(path):
-                try:
-                    df_matrix = pd.read_csv(path, encoding='utf-8')
-                    logger.info(f"Loaded verse matrix from {path}")
-                    break
-                except UnicodeDecodeError:
-                    df_matrix = pd.read_csv(path, encoding='ISO-8859-1')
-                    logger.info(f"Loaded verse matrix from {path} with ISO-8859-1 encoding")
-                    break
-                except Exception as e:
-                    logger.error(f"Failed to load {path}: {e}")
-    if df_matrix is None:
-        if STREAMLIT:
-            st.error("⚠️ Error: Could not load verse matrix CSV file. Please check the file path.")
-            st.stop()
-
-    if STREAMLIT and st.button("🔍 Submit"):
-        try:
-            response, verse_info = generate_gita_response(mode, df_matrix, user_input)
-            st.markdown(
-                "<div style='border: 1px solid #ddd; padding: 1.5rem; border-radius: 1rem; background-color: #fafafa;'>",
-                unsafe_allow_html=True
-            )
-            if response.startswith(("⚠️", "❌", "🛑")):
-                st.error(response)
-            else:
-                try:
-                    vid = None
-                    for c in ["Verse ID", "ID", "Ref", "Key"]:
-                        if verse_info is not None and c in verse_info:
-                            vid = verse_info[c]; break
-                    tag = None
-                    for c in ["Symbolic Conscience Mapping", "Mapping", "Theme", "Tag"]:
-                        if verse_info is not None and c in verse_info:
-                            tag = verse_info[c]; break
-                    if vid or tag:
-                        st.markdown(
-                            f"<small>📘 Verse: <code>{vid if vid else '—'}</code> — <em>{tag if tag else '—'}</em></small>",
-                            unsafe_allow_html=True
-                        )
-                except Exception:
-                    pass
-                st.markdown(response, unsafe_allow_html=True)
-            st.markdown("</div>", unsafe_allow_html=True)
-        except Exception as e:
-            logger.error(f"Streamlit UI error: {e}")
-            st.error(f"⚠️ Unexpected error: {e}")
+    except Exception as e:
+        logger.exception(e)
+        st.error(f"Unexpected error: {e}")

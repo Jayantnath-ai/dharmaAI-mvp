@@ -10,3 +10,15 @@ google-generativeai>=0.3.2
 scikit-learn>=1.2
 
 
+# Optional for SBERT embeddings (faster/better semantics):
+sentence-transformers>=2.2
+torch>=2.1 ; sys_platform != "darwin" or platform_machine != "arm64"
+torch>=2.1 ; sys_platform == "darwin" and platform_machine == "arm64"
+
+# Dev (recommended):
+black>=24.3
+ruff>=0.5
+pytest>=8.0
+
+
+
