@@ -132,19 +132,23 @@ def krishna_teaching(tag: str) -> str:
     return "Detach from outcomes; align with your highest duty."
 
 # ---------------- Ranking (TF-IDF + boosts) ----------------
+
+
 def rank_verses(df: pd.DataFrame, query: str, col_text: str, col_id: str | None, col_tag: str | None, top_k=3):
     vectorizer, vecs = build_tfidf(df, col_text)
     qv = vectorizer.transform([query])
     sims = (vecs @ qv.T).toarray().ravel()
 
-    # Boost: if tag synthesized from query matches row tag, add small bonus
-    q_tag = synthesize_tag(query)
+    # --- Boosts ---
     bonus = np.zeros_like(sims)
-    if col_tag and col_tag in df.columns:
-        row_tags = df[col_tag].fillna("").astype(str).str.lower().values
-        bonus += np.where(np.char.find(row_tags, q_tag) >= 0, 0.03, 0.0)
 
-    # Boost: stakeholder words overlap
+    # Boost 1: tag match to synthesized query tag
+    q_tag = synthesize_tag(query)
+    if q_tag and col_tag and col_tag in df.columns:
+        tag_mask = df[col_tag].fillna("").astype(str).str.lower().str.contains(re.escape(q_tag), na=False).values
+        bonus += tag_mask.astype(float) * 0.03
+
+    # Boost 2: stakeholder word overlap
     stakeholders = extract_stakeholders(query)
     if stakeholders:
         stk = set(stakeholders)
@@ -157,6 +161,7 @@ def rank_verses(df: pd.DataFrame, query: str, col_text: str, col_id: str | None,
     out["similarity"] = score
     top = out.sort_values("similarity", ascending=False).head(top_k)
     return top, top.iloc[0]
+
 
 # ---------------- Plan generation ----------------
 def generate_action_plan(user_input: str, tag: str | None, signals: Dict[str, bool], constraints: List[str]) -> Dict[str, List[str]]:
