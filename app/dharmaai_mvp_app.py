@@ -303,3 +303,29 @@ _Stakeholders:_ `{", ".join(stakeholders) if stakeholders else "—"}` · _Const
         body = f"""
 **Technical Trace**  
 Top-{top_k} (higher = closer):
+
+"""
+    else:
+        # Concise “mirror” fallback
+        winner, lines = simulate_two_paths(signals)
+        body = "**Dharma Mirror**\n" + "\n".join(lines) + "\n\n" + krishna_teaching(verse_tag)
+
+    footer = "\n---\n*Tip:* Name the duty, who decides, what harms you’ll avoid, and the smallest reversible step."
+    return header + "\n\n" + body + "\n\n" + footer
+
+# ---------------- UI ----------------
+df = load_matrix()
+if df is None:
+    st.error("⚠️ Could not load verse matrix CSV. Place it under /data/.")
+    st.stop()
+
+MODES = ["Krishna", "Krishna-Explains", "Technical", "Mirror"]
+mode = st.sidebar.radio("Select Mode", MODES)
+user_input = st.text_input("Describe your ethical dilemma or decision:")
+
+if st.button("🔍 Submit") and user_input.strip():
+    response = generate_gita_response(mode, df, user_input)
+    if response.startswith(("⚠️","🛑")):
+        st.error(response)
+    else:
+        st.markdown(response)
